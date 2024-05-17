@@ -37,6 +37,11 @@ enum Message {
     eliminar(String),
 
     pala(String),
+
+    orden(String),
+    eliminarorden(String),
+
+
 }
 
 struct Calcular {
@@ -45,6 +50,8 @@ struct Calcular {
     proceso: String,
     traza: String,
     cant: usize,
+    procesos:Vec<String>,
+    ordenamiento:Vec<String>
 }
 
 pub fn main() -> iced::Result {
@@ -65,6 +72,9 @@ impl Application for Calcular {
                 proceso: "".to_string(),
                 traza: "".to_string(),
                 cant: 0,
+                procesos:vec!["enzogggggggg".to_string(),"maria".to_string(),"gustavo".to_string(),"jose".to_string(),
+                "mario".to_string(),"jose2".to_string(),"sony".to_string()],
+                ordenamiento:vec![]
             },
             Command::none(),
         )
@@ -108,19 +118,36 @@ impl Application for Calcular {
                     .filter(|x| *x != eliminar)
                     .collect();
             }
+            Message::orden(pala)=>{
+
+                self.ordenamiento.push(pala);
+            }
+            Message::eliminarorden(eliminar)=>{
+
+                self.ordenamiento = self
+                    .ordenamiento
+                    .clone()
+                    .into_iter()
+                    .filter(|x| *x != eliminar)
+                    .collect();
+            }
         }
 
         Command::none()
     }
 
     fn view(&self) -> Element<Message> {
-       //login().into()
-        cargar(self.traza.clone(),self.proceso.clone(), self.ve.clone()).into()
+      // login().into()
+       // cargar(self.traza.clone(),self.proceso.clone(), self.ve.clone()).into()
+
+        
+
+        //ordenador(self.procesos.clone(), self.ordenamiento.clone())
+        cancel(self.procesos.clone())
     }
 }
 fn login() -> Element<'static, Message> {
 
-    
     let imagen = extraer::new("imagenes/Atom.png");
 
     let a = column!(
@@ -198,7 +225,7 @@ fn login() -> Element<'static, Message> {
         .padding(Padding::from(40))
         .center_x()
         .center_y()
-        .style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)));
+        .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)));
 
         container(b)
         .width(350)
@@ -298,7 +325,218 @@ fn cargar(traza: String, proceso: String, trazas: Vec<String>) -> Element<'stati
     
 }
 
+fn ordenador(procesos:Vec<String>,orden:Vec<String>)->Element<'static,Message>{
 
+    let mut b = column!()
+    .width(Length::Fill)
+    .spacing(20)
+    .align_items(iced::Alignment::Center);
+
+for i in procesos.iter() {
+   
+    if orden.contains(i){
+
+        continue;
+    }
+
+    b = b.push(
+        
+        row!(
+
+            container(
+                Button::new(
+                    text(i)
+   
+                     .horizontal_alignment(iced::alignment::Horizontal::Center)
+                        .vertical_alignment(iced::alignment::Vertical::Center)
+                        .size(15)
+                )
+                .width(Length::Fixed(200.0))
+                .height(Length::Fixed(30.0))
+                .style(iced::theme::Button::Custom(Box::new(Buttonstyless::eliminar)))
+                .on_press(Message::orden(i.to_string())),
+            ),
+        )
+        .spacing(15)
+        .align_items(iced::Alignment::Start)
+    );
+}
+let c=container(container(Scrollable::new(b))
+.width(300)
+.height(270)
+.padding(Padding::from(10))
+.center_x()
+.center_x()
+.style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)))).width(Length::Fill).center_x().center_y();
+
+
+
+let mut a = column!(
+    
+).width(Length::Fill)
+.spacing(20)
+.align_items(iced::Alignment::Center);
+
+for i in orden.iter() {
+    a= a.push(
+        
+        row!(
+
+            container(
+                Button::new(
+                    text(i)
+   
+                     .horizontal_alignment(iced::alignment::Horizontal::Center)
+                        .vertical_alignment(iced::alignment::Vertical::Center)
+                        .size(15)
+                )
+                .width(Length::Fixed(200.0))
+                .height(Length::Fixed(30.0))
+                .style(iced::theme::Button::Custom(Box::new(Buttonstyless::eliminar)))
+                .on_press(Message::eliminarorden(i.to_string())),
+            ),
+        )
+        .spacing(15)
+        .align_items(iced::Alignment::Start)
+    );
+}
+
+
+
+let d= container(container(Scrollable::new(a))
+.width(300)
+.height(270)
+.padding(Padding::from(20))
+.center_x()
+.center_x()
+.style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)))).width(Length::Fill).center_x().center_y();
+
+let mut ul=container(column!(
+    
+    container(text("Indique el orden").size(30).style(colore(color!(244, 246, 244)))).width(Length::Fill).center_x().center_y(),
+    
+    c,
+    d,
+    container(
+    Button::new(
+        text("Listo")
+
+         .horizontal_alignment(iced::alignment::Horizontal::Center)
+            .vertical_alignment(iced::alignment::Vertical::Center)
+            .size(15)
+    )
+    .width(Length::Fixed(200.0))
+    .height(Length::Fixed(30.0))
+    .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+    .on_press(Message::eliminar("enzo".to_string()))
+   ).width(Length::Fill)
+    .center_x().center_y(),
+
+
+      ).spacing(30))
+        .padding(Padding::from(20))
+        .width(350)
+        .height(750)
+        .center_x()
+        .center_y()
+        .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)));
+
+    container(ul)
+    .width(400)
+    .height(1500)
+    .center_x()
+    .center_y()
+    .into()
+        
+
+
+
+}
+
+fn cancel(orden:Vec<String>)->Element<'static,Message>{
+  
+    let mut a = column!(
+    
+    ).width(Length::Fill)
+    .spacing(20)
+    .align_items(iced::Alignment::Center);
+    
+    for i in orden.iter() {
+        a= a.push(
+            
+            row!(
+    
+                container(
+                    Button::new(
+                        text(i)
+       
+                         .horizontal_alignment(iced::alignment::Horizontal::Center)
+                            .vertical_alignment(iced::alignment::Vertical::Center)
+                            .size(15)
+                    )
+                    .width(Length::Fixed(200.0))
+                    .height(Length::Fixed(30.0))
+                    .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+                    .on_press(Message::eliminarorden(i.to_string())),
+                ),
+            )
+            .spacing(110)
+            .align_items(iced::Alignment::Start)
+        );
+    }
+    
+    
+    
+    let d= container(container(Scrollable::new(a))
+    .width(300)
+    .height(400)
+    .padding(Padding::from(20))
+    .center_x()
+    .center_x()
+    .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)))).width(Length::Fill).center_x().center_y();
+
+  let c= container( column!(
+        container(text("Cancelar proceso").size(30).style(colore(color!(244, 246, 244)))).width(Length::Fill).center_x().center_y(),
+     d,
+     Button::new(
+        text("Salir")
+
+         .horizontal_alignment(iced::alignment::Horizontal::Center)
+            .vertical_alignment(iced::alignment::Vertical::Center)
+            .size(25)
+    )
+    .width(Length::Fixed(200.0))
+    .height(Length::Fixed(50.0))
+    .style(iced::theme::Button::Custom(Box::new(Buttonstyless::eliminar)))
+    .on_press(Message::eliminarorden("L".to_string()))
+
+    
+
+    ).width(Length::Fill)
+    .spacing(20)
+    .align_items(iced::Alignment::Center)
+
+) .width(300)
+//.height(800)
+.padding(Padding::from(20))
+.center_x()
+.center_x()
+.style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)));
+
+container(
+
+    c
+).width(350)
+.height(900)
+.center_x()
+.center_y()
+.into()
+
+
+
+
+
+}
 
 enum  Containestyle {
     menu,
