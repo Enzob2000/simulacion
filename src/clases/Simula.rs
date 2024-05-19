@@ -1,4 +1,4 @@
-mod estructura;
+use crate::estructura;
 use estructura::cola::Cola;
 use estructura::pila::Pila;
 use estructura::traza::Traza;
@@ -11,19 +11,36 @@ pub struct Procesos {
 }
 
 #[derive(Debug, Clone)]
-struct Simulacion {
+pub struct Simulacion {
     
-    ejecucion: Vec<String>,
-    proceso: Vec<Procesos>,
-    cola_listos: Cola,
-    cola_ejecucion: Cola,
-    cola_pendiente: Cola,
-    cola_terminados: Cola,
-    pila_ejecicion: Pila,
+    pub ejecucion: Vec<String>,
+    pub proceso: Vec<Procesos>,
+    pub cola_listos: Cola,
+    pub cola_ejecucion: Cola,
+    pub cola_pendiente: Cola,
+    pub cola_terminados: Cola,
+    pub pila_ejecicion: Pila,
 }
 
 impl Simulacion {
-    fn cargar_proceso(&mut self, nombre: String, trazas: Vec<String>) {
+    pub fn nuevo()->Simulacion{
+
+        Simulacion{
+        ejecucion:vec![],
+        proceso:vec![],
+        cola_listos:Cola::nueva(),
+        cola_ejecucion:Cola::nueva(),
+        cola_pendiente:Cola::nueva(),
+        cola_terminados:Cola::nueva(),
+        pila_ejecicion:Pila::nueva(),
+
+
+
+        }
+
+    }
+
+   pub fn cargar_proceso(&mut self, nombre: String, trazas: Vec<String>) {
         self.proceso.push(Procesos {
             nombre: nombre.clone(),
             trazas: trazas.clone(),
@@ -32,7 +49,7 @@ impl Simulacion {
         
     }
 
-    fn cargador(&mut self, orden: Vec<String>) {
+    pub fn cargador(&mut self, orden: Vec<String>) {
         let aux = self.proceso.clone();
         self.proceso.clear();
         let mut cont = 0;
@@ -58,7 +75,7 @@ impl Simulacion {
         }
     }
 
-    fn atender_proceso(&mut self) {
+   pub fn atender_proceso(&mut self) {
           
         let mut activo=self.cola_listos.frente();
          
@@ -79,7 +96,7 @@ impl Simulacion {
         }
     }
 
-    fn terminar_proceso(&mut self) {
+    pub fn terminar_proceso(&mut self) {
         self.ejecucion = vec![];
 
         for i in 0..4 {
@@ -121,7 +138,7 @@ impl Simulacion {
         
     }
 
-    fn cancelar(&mut self, nombrecan: String) {
+   pub fn cancelar(&mut self, nombrecan: String) {
         let mut cont = 0;
 
         for i in self.ejecucion.iter() {

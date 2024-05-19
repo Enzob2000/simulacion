@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-use  crate::Traza;
+use  super::traza::Traza;
 
 #[derive(Debug,Clone)]
 pub struct Cola {

@@ -1,3 +1,7 @@
+mod estructura;
+mod clases;
+use clases::Simula::Simulacion;
+use estructura::cola::Cola;
 use iced::color;
 
 use iced::alignment::Horizontal::Right;
@@ -22,6 +26,17 @@ use iced::Settings;
 use iced::{Border, Color, Element, Length, Padding, Shadow, Vector};
 use iced::{Renderer, Theme};
 
+
+#[derive(Debug, Clone)]
+enum Pagina {
+    menu,
+    crear,
+    cargar,
+    cancelar
+    
+}
+
+
 #[derive(Debug, Clone)]
 enum Message {
 
@@ -40,6 +55,10 @@ enum Message {
 
     orden(String),
     eliminarorden(String),
+    menu,
+    crear,
+    cargar,
+    cancelar
 
 
 }
@@ -51,7 +70,9 @@ struct Calcular {
     traza: String,
     cant: usize,
     procesos:Vec<String>,
-    ordenamiento:Vec<String>
+    ordenamiento:Vec<String>,
+    simula:Simulacion,
+    pagina:Pagina
 }
 
 pub fn main() -> iced::Result {
@@ -72,9 +93,10 @@ impl Application for Calcular {
                 proceso: "".to_string(),
                 traza: "".to_string(),
                 cant: 0,
-                procesos:vec!["enzogggggggg".to_string(),"maria".to_string(),"gustavo".to_string(),"jose".to_string(),
-                "mario".to_string(),"jose2".to_string(),"sony".to_string()],
-                ordenamiento:vec![]
+                procesos:vec![],
+                ordenamiento:vec![],
+                simula:Simulacion::nuevo(),
+                pagina:Pagina::menu
             },
             Command::none(),
         )
@@ -86,7 +108,20 @@ impl Application for Calcular {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
+            Message::menu=>{
+                self.pagina=Pagina::menu
+            }
+            Message::cargar=>{
+                self.pagina=Pagina::cargar
+            }
+            Message::cancelar=>{
 
+                self.pagina=Pagina::cancelar
+            }
+            Message::crear=>{
+                self.pagina=Pagina::crear;
+            }
+    
             Message::traza(tra)=>{
 
                 self.traza=tra;
@@ -135,15 +170,24 @@ impl Application for Calcular {
 
         Command::none()
     }
-
-    fn view(&self) -> Element<Message> {
-      // login().into()
+        //login().into()
        // cargar(self.traza.clone(),self.proceso.clone(), self.ve.clone()).into()
 
         
 
         //ordenador(self.procesos.clone(), self.ordenamiento.clone())
-        cancel(self.procesos.clone())
+        //cancel(self.procesos.clone())
+    fn view(&self) -> Element<Message> {
+       row!(login(),
+       fila("texto", self.simula.cola_ejecucion.clone()),
+       fila("texto", self.simula.cola_ejecucion.clone()),
+       fila("texto", self.simula.cola_ejecucion.clone()),
+       fila("texto", self.simula.cola_ejecucion.clone()),
+       fila("texto", self.simula.cola_ejecucion.clone()),
+        )
+        .spacing(10)
+        .into()
+       
     }
 }
 fn login() -> Element<'static, Message> {
@@ -447,10 +491,7 @@ let mut ul=container(column!(
     .center_x()
     .center_y()
     .into()
-        
-
-
-
+    
 }
 
 fn cancel(orden:Vec<String>)->Element<'static,Message>{
@@ -532,10 +573,57 @@ container(
 .center_y()
 .into()
 
+}
 
+fn fila(texto:&str,cola:Cola)->Element<'static,Message> {
 
+    let mut aux =cola.clone();
 
+    let mut a = column!(
 
+        container(
+            text(texto).size(30).style(colore(color!(244, 246, 244)))
+        ).width(Length::Fill).center_x().center_y(),
+
+    
+    ).width(Length::Fill)
+    .spacing(20)
+    .align_items(iced::Alignment::Center);
+    
+    for i in  0..cola.tamano(){
+        let mut nombre=aux.desencolar();
+        let nom="{nombre.nombre}[{nombre.traza}]";
+        a= a.push(
+            
+            row!(
+    
+                container(
+                    Scrollable::new(text(nom).size(30).style(colore(color!(244, 246, 244))))
+                )
+                .width(150)
+                .height(100)
+                .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)))
+            )
+            .spacing(110)
+            .align_items(iced::Alignment::Center)
+        );
+    }
+    
+    let d=container(Scrollable::new(a))
+    .width(170)
+    .height(610)
+    .padding(Padding::from(20))
+    .center_x()
+    .center_x()
+    .style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)));
+
+    container(d)
+    //.width(220)
+    .height(Length::Fill)
+    .center_x()
+    .center_y()
+    .into()
+    
 }
 
 enum  Containestyle {

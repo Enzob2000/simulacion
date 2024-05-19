@@ -1,5 +1,5 @@
 // Definición de la estructura para la Piluse 
-use crate::Traza;
+use super::traza::Traza;
 
 #[derive(Debug, Clone)]
 pub struct Pila {
