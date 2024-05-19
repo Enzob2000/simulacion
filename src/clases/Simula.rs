@@ -105,8 +105,6 @@ impl Simulacion {
             }
             let aux = self.cola_ejecucion.desencolar();
             ////
-           
-            self.cola_terminados.encolar(aux.clone());
 
             for j in self.proceso.iter_mut() {
 
@@ -132,6 +130,8 @@ impl Simulacion {
             if j.activas==0{
             
             self.proceso.remove(i);
+
+            self.pila_ejecicion.push(Traza { nombre: j.nombre.clone(), traza: "".to_string() })
 
             }
         }

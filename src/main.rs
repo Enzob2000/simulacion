@@ -2,6 +2,7 @@ mod estructura;
 mod clases;
 use clases::Simula::Simulacion;
 use estructura::cola::Cola;
+use estructura::pila::Pila;
 use iced::color;
 
 use iced::alignment::Horizontal::Right;
@@ -58,7 +59,11 @@ enum Message {
     menu,
     crear,
     cargar,
-    cancelar
+    cancelar,
+    guardar_proceso,
+    guardar_orden,
+    atender_proceso,
+    terminar_proceso
 
 
 }
@@ -108,6 +113,22 @@ impl Application for Calcular {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
+            Message::atender_proceso=>{
+                self.simula.atender_proceso()
+            }
+            Message::terminar_proceso=>{
+                self.simula.terminar_proceso()
+            }
+            Message::guardar_orden=>{
+                self.simula.cargador(self.ordenamiento.clone() );
+                self.ordenamiento=vec![];
+            }
+            Message::guardar_proceso=>{
+                self.simula.cargar_proceso(self.proceso.clone(), self.ve.clone());
+                self.procesos=vec![];
+                self.proceso="".to_string()
+
+            }
             Message::menu=>{
                 self.pagina=Pagina::menu
             }
@@ -146,12 +167,7 @@ impl Application for Calcular {
                 self.traza="".to_string();
             }
             Message::eliminar(eliminar) => {
-                self.ve = self
-                    .ve
-                    .clone()
-                    .into_iter()
-                    .filter(|x| *x != eliminar)
-                    .collect();
+                self.simula.cancelar(eliminar)
             }
             Message::orden(pala)=>{
 
@@ -170,24 +186,26 @@ impl Application for Calcular {
 
         Command::none()
     }
-        //login().into()
-       // cargar(self.traza.clone(),self.proceso.clone(), self.ve.clone()).into()
-
         
-
-        //ordenador(self.procesos.clone(), self.ordenamiento.clone())
-        //cancel(self.procesos.clone())
     fn view(&self) -> Element<Message> {
-       row!(login(),
-       fila("texto", self.simula.cola_ejecucion.clone()),
-       fila("texto", self.simula.cola_ejecucion.clone()),
-       fila("texto", self.simula.cola_ejecucion.clone()),
-       fila("texto", self.simula.cola_ejecucion.clone()),
-       fila("texto", self.simula.cola_ejecucion.clone()),
-        )
-        .spacing(10)
+
+        let actual= match self.pagina {
+            Pagina::menu=>login(),
+            Pagina::crear=>cargar(self.traza.clone(),self.proceso.clone(), self.ve.clone()),
+            Pagina::cargar=>ordenador(self.procesos.clone(), self.ordenamiento.clone()),
+            Pagina::cancelar=>cancel(self.procesos.clone())
+        };
+
+        row!(
+        actual,
+        pilas("Procesos activos", self.simula.pila_ejecicion.clone()),
+        fila("cola de trazas", self.simula.cola_ejecucion.clone()),
+        fila("cola de pendientes", self.simula.cola_pendiente.clone()),
+        fila("cola de listos", self.simula.cola_listos.clone()),
+        fila("cola de terminados", self.simula.cola_terminados.clone()),
+        ).spacing(10)
         .into()
-       
+        
     }
 }
 fn login() -> Element<'static, Message> {
@@ -204,7 +222,7 @@ fn login() -> Element<'static, Message> {
         .width(Length::Fixed(500.0))
         .height(Length::Fixed(45.0))
         .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-        .on_press(Message::incrementar),
+        .on_press(Message::crear),
         Button::new(
             text("Cargar Procesos")
                 .horizontal_alignment(iced::alignment::Horizontal::Center)
@@ -214,7 +232,7 @@ fn login() -> Element<'static, Message> {
         .width(Length::Fixed(500.0))
         .height(Length::Fixed(45.0))
         .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-        .on_press(Message::incrementar),
+        .on_press(Message::cargar),
         Button::new(
             text("Atender procesos")
                 .horizontal_alignment(iced::alignment::Horizontal::Center)
@@ -224,7 +242,7 @@ fn login() -> Element<'static, Message> {
         .width(Length::Fixed(500.0))
         .height(Length::Fixed(45.0))
         .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-        .on_press(Message::incrementar),
+        .on_press(Message::atender_proceso),
         Button::new(
             text("Terminar proceso")
                 .horizontal_alignment(iced::alignment::Horizontal::Center)
@@ -234,7 +252,7 @@ fn login() -> Element<'static, Message> {
         .width(Length::Fixed(500.0))
         .height(Length::Fixed(45.0))
         .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-        .on_press(Message::incrementar),
+        .on_press(Message::terminar_proceso),
         Button::new(
             text("Cancelar proceso")
                 .horizontal_alignment(iced::alignment::Horizontal::Center)
@@ -244,7 +262,7 @@ fn login() -> Element<'static, Message> {
         .width(Length::Fixed(500.0))
         .height(Length::Fixed(45.0))
         .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-        .on_press(Message::incrementar),
+        .on_press(Message::cancelar),
         Button::new(
             text("Salir")
                 .horizontal_alignment(iced::alignment::Horizontal::Center)
@@ -333,6 +351,19 @@ fn cargar(traza: String, proceso: String, trazas: Vec<String>) -> Element<'stati
             .style(iced::theme::TextInput::Custom(Box::new(Text_inputstyle))),
 
             c,
+            row!(
+
+              
+            Button::new(
+                text("salir")
+                    .horizontal_alignment(iced::alignment::Horizontal::Center)
+                    .vertical_alignment(iced::alignment::Vertical::Center)
+                    .size(15)
+            )
+            .width(Length::Fixed(100.0))
+            .height(Length::Fixed(45.0))
+            .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+            .on_press(Message::menu), 
 
             Button::new(
                 text("Agregar proceso")
@@ -340,10 +371,15 @@ fn cargar(traza: String, proceso: String, trazas: Vec<String>) -> Element<'stati
                     .vertical_alignment(iced::alignment::Vertical::Center)
                     .size(15)
             )
-            .width(Length::Fixed(500.0))
+            .width(Length::Fixed(150.0))
             .height(Length::Fixed(45.0))
             .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-            .on_press(Message::incrementar)  
+            .on_press(Message::guardar_proceso),
+
+        
+        
+        
+         ).spacing(10) 
 
     )
     .width(Length::Fill)
@@ -407,7 +443,7 @@ for i in procesos.iter() {
 }
 let c=container(container(Scrollable::new(b))
 .width(300)
-.height(270)
+.height(190)
 .padding(Padding::from(10))
 .center_x()
 .center_x()
@@ -449,7 +485,7 @@ for i in orden.iter() {
 
 let d= container(container(Scrollable::new(a))
 .width(300)
-.height(270)
+.height(190)
 .padding(Padding::from(20))
 .center_x()
 .center_x()
@@ -461,6 +497,17 @@ let mut ul=container(column!(
     
     c,
     d,
+    row!(
+    Button::new(
+        text("salir")
+            .horizontal_alignment(iced::alignment::Horizontal::Center)
+            .vertical_alignment(iced::alignment::Vertical::Center)
+            .size(15)
+    )
+    .width(Length::Fixed(100.0))
+    .height(Length::Fixed(30.0))
+    .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+    .on_press(Message::menu),
     container(
     Button::new(
         text("Listo")
@@ -469,25 +516,25 @@ let mut ul=container(column!(
             .vertical_alignment(iced::alignment::Vertical::Center)
             .size(15)
     )
-    .width(Length::Fixed(200.0))
+    .width(Length::Fixed(150.0))
     .height(Length::Fixed(30.0))
     .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-    .on_press(Message::eliminar("enzo".to_string()))
+    .on_press(Message::guardar_orden)
    ).width(Length::Fill)
-    .center_x().center_y(),
+    .center_x().center_y())
 
 
       ).spacing(30))
         .padding(Padding::from(20))
-        .width(350)
-        .height(750)
+        .width(300)
+        .height(600)
         .center_x()
         .center_y()
         .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)));
 
     container(ul)
-    .width(400)
-    .height(1500)
+    .width(330)
+    .height(Length::Fill)
     .center_x()
     .center_y()
     .into()
@@ -549,7 +596,7 @@ fn cancel(orden:Vec<String>)->Element<'static,Message>{
     .width(Length::Fixed(200.0))
     .height(Length::Fixed(50.0))
     .style(iced::theme::Button::Custom(Box::new(Buttonstyless::eliminar)))
-    .on_press(Message::eliminarorden("L".to_string()))
+    .on_press(Message::menu)
 
     
 
@@ -582,7 +629,7 @@ fn fila(texto:&str,cola:Cola)->Element<'static,Message> {
     let mut a = column!(
 
         container(
-            text(texto).size(30).style(colore(color!(244, 246, 244)))
+            text(texto).size(20).style(colore(color!(244, 246, 244)))
         ).width(Length::Fill).center_x().center_y(),
 
     
@@ -625,6 +672,59 @@ fn fila(texto:&str,cola:Cola)->Element<'static,Message> {
     .into()
     
 }
+
+fn pilas(texto:&str,cola:Pila)->Element<'static,Message> {
+
+    let mut aux =cola.clone();
+
+    let mut a = column!(
+
+        container(
+            text(texto).size(20).style(colore(color!(244, 246, 244)))
+        ).width(Length::Fill).center_x().center_y(),
+
+    
+    ).width(Length::Fill)
+    .spacing(20)
+    .align_items(iced::Alignment::Center);
+    
+    for i in  0..cola.tamano(){
+        let mut nombre=aux.pop();
+        let nom="{nombre.nombre}[{nombre.traza}]";
+        a= a.push(
+            
+            row!(
+    
+                container(
+                    Scrollable::new(text(nom).size(30).style(colore(color!(244, 246, 244))))
+                )
+                .width(150)
+                .height(100)
+                .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)))
+            )
+            .spacing(110)
+            .align_items(iced::Alignment::Center)
+        );
+    }
+    
+    let d=container(Scrollable::new(a))
+    .width(170)
+    .height(610)
+    .padding(Padding::from(20))
+    .center_x()
+    .center_x()
+    .style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)));
+
+    container(d)
+    //.width(220)
+    .height(Length::Fill)
+    .center_x()
+    .center_y()
+    .into()
+    
+}
+
+
 
 enum  Containestyle {
     menu,
