@@ -21,7 +21,7 @@ impl Pila {
     }
 
     // Eliminar y devolver el último elemento de la Pila (pop)
-    pub fn pop(&mut self) -> Option<Traza> {
+    pub fn pop(&mut self) -> Traza {
         if self.elementos.is_empty() {
 
             println!("La pila esta vacia");
@@ -29,13 +29,13 @@ impl Pila {
            panic!("Error")
 
         } else {
-            self.elementos.pop()
+            self.elementos.pop().unwrap()
         }
     }
 
     // Obtener una referencia al último elemento de la Pila sin eliminarlo (top)
-    pub fn top(&self) -> Option<&Traza> {
-        self.elementos.last()
+    pub fn top(&self) -> Traza {
+        self.elementos.last().unwrap().clone()
     }
 
     // Verificar si la Pila está vacía

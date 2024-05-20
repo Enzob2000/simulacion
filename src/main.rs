@@ -122,11 +122,16 @@ impl Application for Calcular {
             Message::guardar_orden=>{
                 self.simula.cargador(self.ordenamiento.clone() );
                 self.ordenamiento=vec![];
+                self.pagina=Pagina::menu;
+                
             }
             Message::guardar_proceso=>{
                 self.simula.cargar_proceso(self.proceso.clone(), self.ve.clone());
-                self.procesos=vec![];
-                self.proceso="".to_string()
+                self.ve=vec![];
+                self.procesos.push(self.proceso.clone());
+                self.proceso="".to_string();
+                self.pagina=Pagina::menu;
+                
 
             }
             Message::menu=>{
@@ -199,9 +204,9 @@ impl Application for Calcular {
         row!(
         actual,
         pilas("Procesos activos", self.simula.pila_ejecicion.clone()),
-        fila("cola de trazas", self.simula.cola_ejecucion.clone()),
-        fila("cola de pendientes", self.simula.cola_pendiente.clone()),
         fila("cola de listos", self.simula.cola_listos.clone()),
+        fila("cola de trazas", self.simula.cola_ejecucion.clone()),
+        fila("cola de pendientes", self.simula.cola_pendiente.clone()), 
         fila("cola de terminados", self.simula.cola_terminados.clone()),
         ).spacing(10)
         .into()
@@ -622,9 +627,8 @@ container(
 
 }
 
-fn fila(texto:&str,cola:Cola)->Element<'static,Message> {
+fn fila(texto:&str,mut cola: Cola)->Element<'static,Message> {
 
-    let mut aux =cola.clone();
 
     let mut a = column!(
 
@@ -636,19 +640,28 @@ fn fila(texto:&str,cola:Cola)->Element<'static,Message> {
     ).width(Length::Fill)
     .spacing(20)
     .align_items(iced::Alignment::Center);
+  
     
-    for i in  0..cola.tamano(){
-        let mut nombre=aux.desencolar();
-        let nom="{nombre.nombre}[{nombre.traza}]";
+   while !cola.esta_vacia() {
+        
+        let mut nombre=cola.desencolar();
+        
+        let nom=format!("{}[{}]",nombre.nombre,nombre.traza);
+
         a= a.push(
             
             row!(
     
                 container(
-                    Scrollable::new(text(nom).size(30).style(colore(color!(244, 246, 244))))
+
+                    container(Scrollable::new(text(nom).size(20).style(colore(color!(244, 246, 244)))))
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .center_x()
+                    .center_y()
                 )
-                .width(150)
-                .height(100)
+                .width(100)
+                .height(50)
                 .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)))
             )
             .spacing(110)
@@ -673,9 +686,9 @@ fn fila(texto:&str,cola:Cola)->Element<'static,Message> {
     
 }
 
-fn pilas(texto:&str,cola:Pila)->Element<'static,Message> {
+fn pilas(texto:&str,mut cola:Pila)->Element<'static,Message> {
 
-    let mut aux =cola.clone();
+   
 
     let mut a = column!(
 
@@ -688,15 +701,20 @@ fn pilas(texto:&str,cola:Pila)->Element<'static,Message> {
     .spacing(20)
     .align_items(iced::Alignment::Center);
     
-    for i in  0..cola.tamano(){
-        let mut nombre=aux.pop();
-        let nom="{nombre.nombre}[{nombre.traza}]";
+    while !cola.esta_vacia() {
+        
+        let  nombre=cola.pop();
+        let nom=format!("{}[{}]",nombre.nombre,nombre.traza);
         a= a.push(
             
             row!(
     
                 container(
-                    Scrollable::new(text(nom).size(30).style(colore(color!(244, 246, 244))))
+                    container(Scrollable::new(text(nom).size(20).style(colore(color!(244, 246, 244)))))
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .center_x()
+                    .center_y()
                 )
                 .width(150)
                 .height(100)

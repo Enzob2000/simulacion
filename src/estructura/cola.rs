@@ -22,10 +22,10 @@ impl  Cola {
 
     // Obtener y eliminar el primer elemento de la cola
     pub fn desencolar(&mut self) -> Traza {
-        if self.items.pop_front().is_some() {
-            println!("La cola esta vacia");
+        if self.esta_vacia() {
+            
 
-            panic!("Error")
+            panic!("Error,la cola vacia")
         } else {
             self.items.pop_front().unwrap()
         }

@@ -5,9 +5,9 @@ use estructura::traza::Traza;
 
 #[derive(Debug, Clone)]
 pub struct Procesos {
-    activas:usize,
-    nombre: String,
-    trazas: Vec<String>,
+   pub activas:usize,
+   pub nombre: String,
+   pub trazas: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -50,29 +50,35 @@ impl Simulacion {
     }
 
     pub fn cargador(&mut self, orden: Vec<String>) {
+        
         let aux = self.proceso.clone();
         self.proceso.clear();
         let mut cont = 0;
-
-        while (cont != orden.len()-1) {
+        
+            
+        while cont != orden.len() {
             for i in aux.iter() {
-                if *i.nombre == orden[cont] {
+                if i.nombre == orden[cont] {
                     self.proceso.push(i.clone());
                     cont += 1;
+                    break;
                 }
             }
         }
-
+        
         for i in self.proceso.iter() {
             for j in i.trazas.iter() {
                 self.cola_listos.encolar(
-                    (Traza {
+                    Traza {
                         nombre: i.nombre.clone(),
                         traza: j.clone(),
-                    }),
+                    },
                 );
             }
         }
+
+       
+        
     }
 
    pub fn atender_proceso(&mut self) {
@@ -90,7 +96,7 @@ impl Simulacion {
 
         let mut nombre2 = self.cola_listos.frente();
 
-        while (nombre2.nombre ==activo.nombre ) {
+        while nombre2.nombre ==activo.nombre  {
             self.cola_pendiente.encolar(self.cola_listos.desencolar());
             nombre2=self.cola_listos.frente();
         }
@@ -104,8 +110,9 @@ impl Simulacion {
                 break;
             }
             let aux = self.cola_ejecucion.desencolar();
-            ////
-
+            
+            self.pila_ejecicion.push(aux.clone());
+           
             for j in self.proceso.iter_mut() {
 
                 if aux.nombre==*j.nombre{
@@ -118,7 +125,7 @@ impl Simulacion {
 
         }
 
-        while (!self.cola_pendiente.esta_vacia()) {
+        while !self.cola_pendiente.esta_vacia() {
             self.cola_listos.encolar(self.cola_pendiente.desencolar());
         } 
 
@@ -130,8 +137,7 @@ impl Simulacion {
             if j.activas==0{
             
             self.proceso.remove(i);
-
-            self.pila_ejecicion.push(Traza { nombre: j.nombre.clone(), traza: "".to_string() })
+            self.cola_terminados.encolar(Traza{nombre:j.nombre.clone(),traza:"proceso".to_string()})
 
             }
         }
