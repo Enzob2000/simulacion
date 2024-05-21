@@ -79,6 +79,10 @@ impl Simulacion {
 
     pub fn reset(&mut self) {
         fs::remove_file("Data.json");
+        self.procesoV= false;
+        self.cargaV= false;
+        self.atenderV=false;
+        self.terminarV= false;
         self.cola_ejecucion.vaciar();
         self.cola_listos.vaciar();
         self.cola_pendiente.vaciar();

@@ -1,8 +1,10 @@
 mod estructura;
 mod clases;
 use std::clone;
-use std::process::exit;
 
+use std::process::exit;
+use std::{fs::File, io::{BufRead, BufWriter, Write}};
+const MI_IMAGEN: &'static[u8] = include_bytes!("Atom.png");
 use clases::Simula::Simulacion;
 use estructura::cola::Cola;
 use estructura::pila::Pila;
@@ -11,6 +13,7 @@ use iced::color;
 use iced::alignment::Horizontal::Right;
 use iced::command::Command;
 use iced::executor::Default;
+
 use iced::overlay::menu::State;
 use iced::theme::palette::Background;
 use iced::theme::Text::Color as colore;
@@ -101,7 +104,7 @@ impl Application for Interfas {
     fn new(fla: ()) -> (Interfas, Command<Message>) {
         (
             Interfas {
-               // value: 0,
+            
                 ve: vec![],
                 proceso: "".to_string(),
                 traza: "".to_string(),
@@ -265,7 +268,13 @@ impl Application for Interfas {
 }
 fn login() -> Element<'static, Message> {
 
-    let imagen = extraer::new("imagenes/Atom.png");
+   
+    let mut imagne=File::create("Atom.png").unwrap();
+    let mut write =BufWriter::new(&mut imagne);
+
+     write.write_all(MI_IMAGEN);
+
+    let imagen = extraer::new("Atom.png");
 
     let a = column!(
         Button::new(
