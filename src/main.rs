@@ -1,5 +1,8 @@
 mod estructura;
 mod clases;
+use std::clone;
+use std::process::exit;
+
 use clases::Simula::Simulacion;
 use estructura::cola::Cola;
 use estructura::pila::Pila;
@@ -44,9 +47,7 @@ enum Message {
      proceso(String),
 
      traza(String),
-    incrementar,
-
-    decrementar,
+    
 
     guardar,
 
@@ -63,13 +64,20 @@ enum Message {
     guardar_proceso,
     guardar_orden,
     atender_proceso,
-    terminar_proceso
+    terminar_proceso,
+    salir,
+    reset,
+    cancelar_proceso(String)
 
 
 }
 
-struct Calcular {
-    value: i32,
+struct Interfas {
+    procesoV:bool,
+    cargaV:bool,
+    atenderV:bool,
+    terminarV:bool,
+   // value: i32,
     ve: Vec<String>,
     proceso: String,
     traza: String,
@@ -81,19 +89,19 @@ struct Calcular {
 }
 
 pub fn main() -> iced::Result {
-    Calcular::run(Settings::default())
+    Interfas::run(Settings::default())
 }
 
-impl Application for Calcular {
+impl Application for Interfas {
     type Executor = iced::executor::Default;
     type Message = Message;
     type Theme = Theme;
     type Flags = ();
 
-    fn new(fla: ()) -> (Calcular, Command<Message>) {
+    fn new(fla: ()) -> (Interfas, Command<Message>) {
         (
-            Calcular {
-                value: 0,
+            Interfas {
+               // value: 0,
                 ve: vec![],
                 proceso: "".to_string(),
                 traza: "".to_string(),
@@ -101,7 +109,11 @@ impl Application for Calcular {
                 procesos:vec![],
                 ordenamiento:vec![],
                 simula:Simulacion::nuevo(),
-                pagina:Pagina::menu
+                pagina:Pagina::menu,
+                procesoV:false,
+                cargaV:false,
+                atenderV:false,
+                terminarV:false
             },
             Command::none(),
         )
@@ -113,24 +125,62 @@ impl Application for Calcular {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
+            Message::cancelar_proceso(proceso)=>{
+
+                self.simula.cancelar(proceso.clone());
+
+                
+                
+            }
+
+            Message::reset=>{
+
+            self.simula.reset()
+
+            }
+            Message::salir=>{
+
+                self.simula.reset();
+
+                exit(0x0100);
+            }
             Message::atender_proceso=>{
+                
+                if self.simula.procesoV && self.simula.cargaV && !self.simula.terminarV{
+                
+                self.simula.terminarV=true;
+                self.simula.atenderV=false;
                 self.simula.atender_proceso()
+               
+               
+               }
             }
             Message::terminar_proceso=>{
-                self.simula.terminar_proceso()
+
+                 if self.simula.procesoV && self.simula.cargaV && !self.simula.atenderV{
+                 
+                    self.simula.terminarV=false;
+                    self.simula.atenderV=true;
+
+                self.simula.terminar_proceso()}
             }
             Message::guardar_orden=>{
+
+                if self.simula.procesoV{
+                self.simula.cargaV=true;
                 self.simula.cargador(self.ordenamiento.clone() );
                 self.ordenamiento=vec![];
-                self.pagina=Pagina::menu;
+                self.pagina=Pagina::menu;}
                 
             }
             Message::guardar_proceso=>{
+                if !self.cargaV{
+                self.procesoV=true;
                 self.simula.cargar_proceso(self.proceso.clone(), self.ve.clone());
                 self.ve=vec![];
                 self.procesos.push(self.proceso.clone());
                 self.proceso="".to_string();
-                self.pagina=Pagina::menu;
+                self.pagina=Pagina::menu;}
                 
 
             }
@@ -138,14 +188,20 @@ impl Application for Calcular {
                 self.pagina=Pagina::menu
             }
             Message::cargar=>{
-                self.pagina=Pagina::cargar
+                if self.procesoV && !self.cargaV{
+                    
+                    self.pagina=Pagina::cargar
+                }
+                
             }
             Message::cancelar=>{
 
                 self.pagina=Pagina::cancelar
             }
             Message::crear=>{
-                self.pagina=Pagina::crear;
+                if !self.simula.cargaV{
+                    self.simula.procesoV=true;
+                self.pagina=Pagina::crear;}
             }
     
             Message::traza(tra)=>{
@@ -158,12 +214,6 @@ impl Application for Calcular {
                 self.proceso=proce;
             }
 
-            Message::incrementar => {
-                self.value += 1;
-            }
-            Message::decrementar => {
-                self.value -= 1;
-            }
             Message::pala(palabra) => {}
 
             Message::guardar => {
@@ -198,16 +248,16 @@ impl Application for Calcular {
             Pagina::menu=>login(),
             Pagina::crear=>cargar(self.traza.clone(),self.proceso.clone(), self.ve.clone()),
             Pagina::cargar=>ordenador(self.procesos.clone(), self.ordenamiento.clone()),
-            Pagina::cancelar=>cancel(self.procesos.clone())
+            Pagina::cancelar=>cancel(self.simula.activos.clone())
         };
 
         row!(
         actual,
-        pilas("Procesos activos", self.simula.pila_ejecicion.clone()),
-        fila("cola de listos", self.simula.cola_listos.clone()),
-        fila("cola de trazas", self.simula.cola_ejecucion.clone()),
-        fila("cola de pendientes", self.simula.cola_pendiente.clone()), 
-        fila("cola de terminados", self.simula.cola_terminados.clone()),
+        pilas("Pila de ejecucion", self.simula.pila_ejecicion.clone()),
+        fila("Cola de listos", self.simula.cola_listos.clone()),
+        fila("Cola de ejecucion", self.simula.cola_ejecucion.clone()),
+        fila("Cola de pendientes", self.simula.cola_pendiente.clone()), 
+        fila("Cola de terminados", self.simula.cola_terminados.clone()),
         ).spacing(10)
         .into()
         
@@ -268,22 +318,37 @@ fn login() -> Element<'static, Message> {
         .height(Length::Fixed(45.0))
         .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
         .on_press(Message::cancelar),
-        Button::new(
+        row!(Button::new(
             text("Salir")
                 .horizontal_alignment(iced::alignment::Horizontal::Center)
                 .vertical_alignment(iced::alignment::Vertical::Center)
                 .size(15)
         )
-        .width(Length::Fixed(500.0))
+        .width(Length::Fixed(150.0))
         .height(Length::Fixed(45.0))
         .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-        .on_press(Message::incrementar),
+        .on_press(Message::salir),
+
+        Button::new(
+            text("reset")
+                .horizontal_alignment(iced::alignment::Horizontal::Center)
+                .vertical_alignment(iced::alignment::Vertical::Center)
+                .size(15)
+        )
+        .width(Length::Fixed(70.0))
+        .height(Length::Fixed(45.0))
+        .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+        .on_press(Message::reset),
+    ).spacing(10)
     )
     .width(Length::Fill)
     .spacing(20)
     .align_items(iced::Alignment::Center);
 
-    let c = column!(imagen.width(150).height(150), a)
+    let c = column!(
+        
+        
+        imagen.width(150).height(150), a)
         .spacing(30)
         .align_items(iced::Alignment::Center);
 
@@ -570,7 +635,7 @@ fn cancel(orden:Vec<String>)->Element<'static,Message>{
                     .width(Length::Fixed(200.0))
                     .height(Length::Fixed(30.0))
                     .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-                    .on_press(Message::eliminarorden(i.to_string())),
+                    .on_press(Message::cancelar_proceso(i.to_string())),
                 ),
             )
             .spacing(110)
@@ -633,7 +698,7 @@ fn fila(texto:&str,mut cola: Cola)->Element<'static,Message> {
     let mut a = column!(
 
         container(
-            text(texto).size(20).style(colore(color!(244, 246, 244)))
+            text(texto).size(15).style(colore(color!(244, 246, 244)))
         ).width(Length::Fill).center_x().center_y(),
 
     
@@ -693,7 +758,7 @@ fn pilas(texto:&str,mut cola:Pila)->Element<'static,Message> {
     let mut a = column!(
 
         container(
-            text(texto).size(20).style(colore(color!(244, 246, 244)))
+            text(texto).size(15).style(colore(color!(244, 246, 244)))
         ).width(Length::Fill).center_x().center_y(),
 
     
@@ -716,8 +781,8 @@ fn pilas(texto:&str,mut cola:Pila)->Element<'static,Message> {
                     .center_x()
                     .center_y()
                 )
-                .width(150)
-                .height(100)
+                .width(100)
+                .height(50)
                 .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)))
             )
             .spacing(110)

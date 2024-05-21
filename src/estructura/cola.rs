@@ -1,7 +1,8 @@
 use std::collections::VecDeque;
 use  super::traza::Traza;
+use serde::{Deserialize,Serialize};
 
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone,Deserialize,Serialize)]
 pub struct Cola {
    pub items: VecDeque<Traza>,
 }
@@ -13,6 +14,10 @@ impl  Cola {
         Cola {
             items: VecDeque::new(),
         }
+    }
+    pub fn vaciar(& mut self){
+
+        self.items.clear();
     }
 
     // Agregar un elemento al final de la cola

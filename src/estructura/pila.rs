@@ -1,7 +1,8 @@
 // Definición de la estructura para la Piluse 
 use super::traza::Traza;
+use serde::{Deserialize,Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,Deserialize,Serialize)]
 pub struct Pila {
     pub elementos: Vec<Traza>,
 }
