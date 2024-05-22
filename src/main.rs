@@ -225,7 +225,11 @@ impl Application for Interfas {
                 self.traza="".to_string();
             }
             Message::eliminar(eliminar) => {
-                self.simula.cancelar(eliminar)
+                self.ve=self.ve
+                .clone()
+                .into_iter()
+                .filter(|x| *x != eliminar)
+                .collect();
             }
             Message::orden(pala)=>{
 

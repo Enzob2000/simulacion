@@ -120,8 +120,9 @@ impl Simulacion {
             trazas: trazas.clone(),
             activas: trazas.len(),
         });
-        self.archivo();
+       
         self.activos.push(nombre);
+        self.archivo();
     }
 
     pub fn cargador(&mut self, orden: Vec<String>) {
@@ -169,6 +170,7 @@ impl Simulacion {
             self.cola_pendiente.encolar(self.cola_listos.desencolar());
             nombre2 = self.cola_listos.frente();
         }
+        self.archivo();
     }
 
     pub fn terminar_proceso(&mut self) {
