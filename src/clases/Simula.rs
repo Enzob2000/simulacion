@@ -1,6 +1,5 @@
 use crate::estructura;
-use estructura::cola::Cola;
-use estructura::pila::Pila;
+use std::collections::LinkedList;
 use estructura::traza::Traza;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -25,11 +24,11 @@ pub struct Simulacion {
     pub activos: Vec<String>,
     pub ejecucion: Vec<String>,
     pub proceso: Vec<Procesos>,
-    pub cola_listos: Cola,
-    pub cola_ejecucion: Cola,
-    pub cola_pendiente: Cola,
-    pub cola_terminados: Cola,
-    pub pila_ejecicion: Pila,
+    pub cola_listos: LinkedList<Traza>,
+    pub cola_ejecucion: LinkedList<Traza>,
+    pub cola_pendiente: LinkedList<Traza>,
+    pub cola_terminados: LinkedList<Traza>,
+    pub pila_ejecicion: LinkedList<Traza>,
 }
 
 impl Simulacion {
@@ -68,11 +67,11 @@ impl Simulacion {
                 activos: vec![],
                 ejecucion: vec![],
                 proceso: vec![],
-                cola_listos: Cola::nueva(),
-                cola_ejecucion: Cola::nueva(),
-                cola_pendiente: Cola::nueva(),
-                cola_terminados: Cola::nueva(),
-                pila_ejecicion: Pila::nueva(),
+                cola_listos: LinkedList::new(),
+                cola_ejecucion:  LinkedList::new(),
+                cola_pendiente:  LinkedList::new(),
+                cola_terminados:  LinkedList::new(),
+                pila_ejecicion:  LinkedList::new(),
             };
         }
     }
@@ -83,11 +82,11 @@ impl Simulacion {
         self.cargaV= false;
         self.atenderV=false;
         self.terminarV= false;
-        self.cola_ejecucion.vaciar();
-        self.cola_listos.vaciar();
-        self.cola_pendiente.vaciar();
-        self.cola_terminados.vaciar();
-        self.pila_ejecicion.vaciar();
+        self.cola_ejecucion.clear();
+        self.cola_listos.clear();
+        self.cola_pendiente.clear();
+        self.cola_terminados.clear();
+        self.pila_ejecicion.clear();
         self.ejecucion.clear();
         self.proceso.clear();
     }
@@ -142,7 +141,7 @@ impl Simulacion {
 
         for i in self.proceso.iter() {
             for j in i.trazas.iter() {
-                self.cola_listos.encolar(Traza {
+                self.cola_listos.push_front(Traza {
                     nombre: i.nombre.clone(),
                     traza: j.clone(),
                 });
@@ -153,36 +152,37 @@ impl Simulacion {
     }
 
     pub fn atender_proceso(&mut self) {
-        let mut activo = self.cola_listos.frente();
+        let mut activo =self.cola_listos.front().unwrap();
 
         for i in 0..4 {
-            if self.cola_listos.esta_vacia() {
+            if self.cola_listos.is_empty() {
                 break;
             }
-            activo = self.cola_listos.desencolar();
+            activo = self.cola_listos.pop_front().unwrap();
             self.ejecucion.push(activo.nombre.clone());
-            self.cola_ejecucion.encolar(activo.clone());
+            self.cola_ejecucion.push_back(activo.clone());
         }
 
-        let mut nombre2 = self.cola_listos.frente();
+        let mut nombre2 = self.cola_listos.front().unwrap();
 
         while nombre2.nombre == activo.nombre {
-            self.cola_pendiente.encolar(self.cola_listos.desencolar());
-            nombre2 = self.cola_listos.frente();
+            self.cola_pendiente.push_back(self.cola_listos.pop_front().unwrap());
+            nombre2 = *self.cola_listos.front().unwrap();
         }
         self.archivo();
     }
+
 
     pub fn terminar_proceso(&mut self) {
         self.ejecucion = vec![];
 
         for i in 0..4 {
-            if self.cola_ejecucion.esta_vacia() {
+            if self.cola_ejecucion.is_empty() {
                 break;
             }
-            let aux = self.cola_ejecucion.desencolar();
+            let aux = self.cola_ejecucion.pop_front().unwrap();
 
-            self.pila_ejecicion.push(aux.clone());
+            self.pila_ejecicion.push_front(aux.clone());
 
             for j in self.proceso.iter_mut() {
                 if aux.nombre == *j.nombre {
@@ -191,15 +191,15 @@ impl Simulacion {
             }
         }
 
-        while !self.cola_pendiente.esta_vacia() {
-            self.cola_listos.encolar(self.cola_pendiente.desencolar());
+        while !self.cola_pendiente.is_empty() {
+            self.cola_listos.push_back(self.cola_pendiente.pop_front().unwrap());
         }
 
         let aux = self.proceso.clone();
 
         for (i, j) in aux.iter().enumerate() {
             if self.proceso.len() == 1 && j.activas == 0 {
-                self.cola_terminados.encolar(Traza {
+                self.cola_terminados.push_back(Traza {
                     nombre: j.nombre.clone(),
                     traza: "".to_string(),
                 });
@@ -211,7 +211,7 @@ impl Simulacion {
 
             if j.activas == 0 && self.proceso.len() != 0 {
                 self.proceso.remove(i);
-                self.cola_terminados.encolar(Traza {
+                self.cola_terminados.push_back(Traza {
                     nombre: j.nombre.clone(),
                     traza: "".to_string(),
                 });
@@ -236,13 +236,13 @@ impl Simulacion {
 
         let mut aux = self.cola_listos.clone();
 
-        self.cola_listos.items.clear();
+        self.cola_listos.clear();
 
-        while !aux.esta_vacia() {
-            let nom = aux.desencolar();
+        while !aux.is_empty() {
+            let nom = aux.pop_back().unwrap();
 
             if nom.nombre != nombrecan {
-                self.cola_listos.encolar(nom.clone())
+                self.cola_listos.push_back(nom.clone())
             }
         }
 

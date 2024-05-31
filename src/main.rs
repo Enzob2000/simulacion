@@ -1,19 +1,16 @@
 mod estructura;
 mod clases;
 use std::clone;
-
 use std::process::exit;
 use std::{fs::File, io::{BufRead, BufWriter, Write}};
 const MI_IMAGEN: &'static[u8] = include_bytes!("Atom.png");
 use clases::Simula::Simulacion;
-use estructura::cola::Cola;
-use estructura::pila::Pila;
+use estructura::traza::Traza;
 use iced::color;
-
 use iced::alignment::Horizontal::Right;
 use iced::command::Command;
 use iced::executor::Default;
-
+use std::collections::LinkedList;
 use iced::overlay::menu::State;
 use iced::theme::palette::Background;
 use iced::theme::Text::Color as colore;
@@ -705,7 +702,7 @@ container(
 
 }
 
-fn fila(texto:&str,mut cola: Cola)->Element<'static,Message> {
+fn fila(texto:&str,mut cola: LinkedList<Traza>)->Element<'static,Message> {
 
 
     let mut a = column!(
@@ -720,9 +717,9 @@ fn fila(texto:&str,mut cola: Cola)->Element<'static,Message> {
     .align_items(iced::Alignment::Center);
   
     
-   while !cola.esta_vacia() {
+   while !cola.is_empty() {
         
-        let mut nombre=cola.desencolar();
+        let mut nombre=cola.pop_back().unwrap();
         
         let nom=format!("{}[{}]",nombre.nombre,nombre.traza);
 
@@ -764,7 +761,7 @@ fn fila(texto:&str,mut cola: Cola)->Element<'static,Message> {
     
 }
 
-fn pilas(texto:&str,mut cola:Pila)->Element<'static,Message> {
+fn pilas(texto:&str,mut cola:LinkedList<Traza>)->Element<'static,Message> {
 
    
 
@@ -779,9 +776,9 @@ fn pilas(texto:&str,mut cola:Pila)->Element<'static,Message> {
     .spacing(20)
     .align_items(iced::Alignment::Center);
     
-    while !cola.esta_vacia() {
+    while !cola.is_empty() {
         
-        let  nombre=cola.pop();
+        let  nombre=cola.pop_front().unwrap();
         let nom=format!("{}[{}]",nombre.nombre,nombre.traza);
         a= a.push(
             
