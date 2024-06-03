@@ -1,7 +1,7 @@
 use crate::estructura;
-use std::collections::LinkedList;
 use estructura::traza::Traza;
 use serde::{Deserialize, Serialize};
+use std::collections::LinkedList;
 use std::{
     fs::{self, File},
     io::{Read, Write},
@@ -68,20 +68,20 @@ impl Simulacion {
                 ejecucion: vec![],
                 proceso: vec![],
                 cola_listos: LinkedList::new(),
-                cola_ejecucion:  LinkedList::new(),
-                cola_pendiente:  LinkedList::new(),
-                cola_terminados:  LinkedList::new(),
-                pila_ejecicion:  LinkedList::new(),
+                cola_ejecucion: LinkedList::new(),
+                cola_pendiente: LinkedList::new(),
+                cola_terminados: LinkedList::new(),
+                pila_ejecicion: LinkedList::new(),
             };
         }
     }
 
     pub fn reset(&mut self) {
         fs::remove_file("Data.json");
-        self.procesoV= false;
-        self.cargaV= false;
-        self.atenderV=false;
-        self.terminarV= false;
+        self.procesoV = false;
+        self.cargaV = false;
+        self.atenderV = false;
+        self.terminarV = false;
         self.cola_ejecucion.clear();
         self.cola_listos.clear();
         self.cola_pendiente.clear();
@@ -119,7 +119,7 @@ impl Simulacion {
             trazas: trazas.clone(),
             activas: trazas.len(),
         });
-       
+
         self.activos.push(nombre);
         self.archivo();
     }
@@ -152,7 +152,7 @@ impl Simulacion {
     }
 
     pub fn atender_proceso(&mut self) {
-        let mut activo =self.cola_listos.front().unwrap();
+        let mut activo = self.cola_listos.front().unwrap().clone();
 
         for i in 0..4 {
             if self.cola_listos.is_empty() {
@@ -163,15 +163,14 @@ impl Simulacion {
             self.cola_ejecucion.push_back(activo.clone());
         }
 
-        let mut nombre2 = self.cola_listos.front().unwrap();
-
-        while nombre2.nombre == activo.nombre {
-            self.cola_pendiente.push_back(self.cola_listos.pop_front().unwrap());
-            nombre2 = *self.cola_listos.front().unwrap();
+        while !self.cola_listos.is_empty()
+            && self.cola_listos.front().unwrap().nombre == activo.nombre
+        {
+            self.cola_pendiente
+                .push_back(self.cola_listos.pop_front().unwrap());
         }
         self.archivo();
     }
-
 
     pub fn terminar_proceso(&mut self) {
         self.ejecucion = vec![];
@@ -192,7 +191,8 @@ impl Simulacion {
         }
 
         while !self.cola_pendiente.is_empty() {
-            self.cola_listos.push_back(self.cola_pendiente.pop_front().unwrap());
+            self.cola_listos
+                .push_back(self.cola_pendiente.pop_front().unwrap());
         }
 
         let aux = self.proceso.clone();
