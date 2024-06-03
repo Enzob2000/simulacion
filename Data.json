@@ -1,0 +1,1 @@
+{"procesoV":true,"cargaV":false,"atenderV":false,"terminarV":false,"activos":["p1"],"ejecucion":[],"proceso":[{"activas":3,"nombre":"p1","trazas":["1","6","9"]}],"cola_listos":[],"cola_ejecucion":[],"cola_pendiente":[],"cola_terminados":[],"pila_ejecicion":[]}

@@ -260,4 +260,24 @@ impl Simulacion {
 
         self.archivo()
     }
+
+    fn insertar(mut self, proceso: String, trazas: String) {
+        self.proceso
+            .iter_mut()
+            .filter(|x| *x.nombre == proceso)
+            .filter(|x| ! (x.clone().trazas.contains(&trazas.clone())))
+            .map(|x| {
+                x.trazas.push(trazas.clone());
+                x.activas += 1;
+                self.cola_listos.push_back(Traza {
+                    nombre: proceso.clone(),
+                    traza: trazas.clone(),
+                });
+            });
+    }
+
+    fn eliminar(mut self, proceso: String, trazas: String) {
+
+
+    }
 }
