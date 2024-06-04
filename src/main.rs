@@ -257,7 +257,7 @@ impl Application for Interfas {
 
         row!(
         //actual,
-        
+        nuevo(self.simula.activos.clone(),self.traza.clone()),
         pilas("Pila de ejecucion", self.simula.pila_ejecicion.clone()),
         fila("Cola de listos", self.simula.cola_listos.clone()),
         fila("Cola de ejecucion", self.simula.cola_ejecucion.clone()),
@@ -821,7 +821,7 @@ fn pilas(texto:&str,mut cola:LinkedList<Traza>)->Element<'static,Message> {
 }
 
 
-fn nuevo(procesos:Vec<String>,orden:Vec<String>,proceso: String)->Element<'static,Message>{
+fn nuevo(procesos:Vec<String>,traza: String)->Element<'static,Message>{
 
     let mut b = column!()
     .width(Length::Fill)
@@ -830,10 +830,7 @@ fn nuevo(procesos:Vec<String>,orden:Vec<String>,proceso: String)->Element<'stati
 
 for i in procesos.iter() {
    
-    if orden.contains(i){
-
-        continue;
-    }
+   
 
     b = b.push(
         
@@ -876,55 +873,69 @@ text_input("Nombre de la traza  (ENTER)", &traza)
     .on_submit(Message::guardar)
     .style(iced::theme::TextInput::Custom(Box::new(Text_inputstyle))),
 
+    row!(
+        Button::new(
+            text("Insertar")
+                .horizontal_alignment(iced::alignment::Horizontal::Center)
+                .vertical_alignment(iced::alignment::Vertical::Center)
+                .size(15)
+        )
+        .width(Length::Fixed(125.0))
+        .height(Length::Fixed(30.0))
+        .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+        .on_press(Message::menu),
+        container(
+        Button::new(
+            text("eliminar")
+    
+             .horizontal_alignment(iced::alignment::Horizontal::Center)
+                .vertical_alignment(iced::alignment::Vertical::Center)
+                .size(15)
+        )
+        .width(Length::Fixed(125.0))
+        .height(Length::Fixed(30.0))
+        .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+        .on_press(Message::guardar_orden)
+       ).width(Length::Fill)
+        .center_x().center_y()).spacing(10)
+
+
+
 
     
 ).width(Length::Fill)
 .spacing(20)
 .align_items(iced::Alignment::Center);
 
+let salir=container(
+    Button::new(
+        text("Salir")
 
+         .horizontal_alignment(iced::alignment::Horizontal::Center)
+            .vertical_alignment(iced::alignment::Vertical::Center)
+            .size(20)
+    )
+    .width(Length::Fixed(150.0))
+    .height(Length::Fixed(40.0))
+    .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+    .on_press(Message::guardar_orden)
+   ).width(Length::Fill)
+    .center_x().center_y();
 
-
-
-let d= container(container(Scrollable::new(a))
-.width(300)
-.height(190)
-.padding(Padding::from(20))
-.center_x()
-.center_x()
-.style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)))).width(Length::Fill).center_x().center_y();
 
 let mut ul=container(column!(
     
     container(text("Indique la accion").size(30).style(colore(color!(244, 246, 244)))).width(Length::Fill).center_x().center_y(),
     
     c,
-    d,
-    row!(
-    Button::new(
-        text("Isertar")
-            .horizontal_alignment(iced::alignment::Horizontal::Center)
-            .vertical_alignment(iced::alignment::Vertical::Center)
-            .size(15)
-    )
-    .width(Length::Fixed(100.0))
-    .height(Length::Fixed(30.0))
-    .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-    .on_press(Message::menu),
-    container(
-    Button::new(
-        text("eliminar")
+    a,
 
-         .horizontal_alignment(iced::alignment::Horizontal::Center)
-            .vertical_alignment(iced::alignment::Vertical::Center)
-            .size(15)
-    )
-    .width(Length::Fixed(150.0))
-    .height(Length::Fixed(30.0))
-    .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-    .on_press(Message::guardar_orden)
-   ).width(Length::Fill)
-    .center_x().center_y())
+  salir
+    
+
+    
+    
+    
 
 
       ).spacing(30))
