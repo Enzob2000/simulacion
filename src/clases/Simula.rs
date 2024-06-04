@@ -265,8 +265,8 @@ impl Simulacion {
         self.proceso
             .iter_mut()
             .filter(|x| *x.nombre == proceso)
-            .filter(|x| ! (x.clone().trazas.contains(&trazas.clone())))
-            .map(|x| {
+            .filter(|x| ! (x.trazas.contains(&trazas.clone())))
+            .for_each(|x| {
                 x.trazas.push(trazas.clone());
                 x.activas += 1;
                 self.cola_listos.push_back(Traza {
