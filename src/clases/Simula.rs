@@ -265,8 +265,7 @@ impl Simulacion {
     pub fn insertar(&mut self, proceso: String, trazas: String) {
         self.proceso
             .iter_mut()
-            .filter(|x| *x.nombre == proceso)
-            .filter(|x| !(x.trazas.contains(&trazas.clone())))
+            .filter(|x| *x.nombre == proceso && !(x.trazas.contains(&trazas.clone())))
             .for_each(|x| {
                 x.trazas.push(trazas.clone());
                 x.activas += 1;
@@ -279,14 +278,17 @@ impl Simulacion {
     }
 
     pub fn eliminar(&mut self, proceso: String, trazas: String) {
-        let aux = self.cola_listos.clone();
-        self.cola_listos.clear();
-
-        aux.iter()
+        
+        self.cola_listos=self.cola_listos
+           .clone()
+           .into_iter()
             .filter(|x| !(*x.nombre == proceso && *x.traza == trazas))
-            .for_each(|x| {
-                self.cola_listos.push_back(x.clone());
-            });
+            .collect();
+
+        self.proceso
+        .iter_mut()
+        .filter(|x| *x.nombre==proceso)
+        .for_each(|x|x.trazas.retain(|x| *x!=trazas));
 
         self.archivo();
     }
