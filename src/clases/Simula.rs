@@ -89,6 +89,7 @@ impl Simulacion {
         self.pila_ejecicion.clear();
         self.ejecucion.clear();
         self.proceso.clear();
+        self.activos.clear();
     }
     fn archivo(&self) {
         let simu = Simulacion {
@@ -141,7 +142,7 @@ impl Simulacion {
 
         for i in self.proceso.iter() {
             for j in i.trazas.iter() {
-                self.cola_listos.push_front(Traza {
+                self.cola_listos.push_back(Traza {
                     nombre: i.nombre.clone(),
                     traza: j.clone(),
                 });
@@ -261,11 +262,11 @@ impl Simulacion {
         self.archivo()
     }
 
-    fn insertar(mut self, proceso: String, trazas: String) {
+    pub fn insertar(&mut self, proceso: String, trazas: String) {
         self.proceso
             .iter_mut()
             .filter(|x| *x.nombre == proceso)
-            .filter(|x| ! (x.trazas.contains(&trazas.clone())))
+            .filter(|x| !(x.trazas.contains(&trazas.clone())))
             .for_each(|x| {
                 x.trazas.push(trazas.clone());
                 x.activas += 1;
@@ -274,10 +275,19 @@ impl Simulacion {
                     traza: trazas.clone(),
                 });
             });
+        self.archivo();
     }
 
-    fn eliminar(mut self, proceso: String, trazas: String) {
+    pub fn eliminar(&mut self, proceso: String, trazas: String) {
+        let aux = self.cola_listos.clone();
+        self.cola_listos.clear();
 
+        aux.iter()
+            .filter(|x| !(*x.nombre == proceso && *x.traza == trazas))
+            .for_each(|x| {
+                self.cola_listos.push_back(x.clone());
+            });
 
+        self.archivo();
     }
 }

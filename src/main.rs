@@ -1,16 +1,18 @@
-mod estructura;
 mod clases;
+mod estructura;
 use std::clone;
 use std::process::exit;
-use std::{fs::File, io::{BufRead, BufWriter, Write}};
-const MI_IMAGEN: &'static[u8] = include_bytes!("Atom.png");
+use std::{
+    fs::File,
+    io::{BufRead, BufWriter, Write},
+};
+const MI_IMAGEN: &'static [u8] = include_bytes!("Atom.png");
 use clases::Simula::Simulacion;
 use estructura::traza::Traza;
-use iced::color;
 use iced::alignment::Horizontal::Right;
+use iced::color;
 use iced::command::Command;
 use iced::executor::Default;
-use std::collections::LinkedList;
 use iced::overlay::menu::State;
 use iced::theme::palette::Background;
 use iced::theme::Text::Color as colore;
@@ -23,6 +25,7 @@ use iced::widget::{
     Column, Scrollable, TextInput,
 };
 use iced::widget::{combo_box, text_input};
+use std::collections::LinkedList;
 
 use iced::Application;
 use iced::Sandbox;
@@ -30,24 +33,24 @@ use iced::Settings;
 use iced::{Border, Color, Element, Length, Padding, Shadow, Vector};
 use iced::{Renderer, Theme};
 
-
 #[derive(Debug, Clone)]
 enum Pagina {
     menu,
     crear,
     cargar,
-    cancelar
-    
+    cancelar,
+    nuevo,
 }
-
 
 #[derive(Debug, Clone)]
 enum Message {
+    insertar,
 
-     proceso(String),
+    descartar,
 
-     traza(String),
-    
+    proceso(String),
+
+    traza(String),
 
     guardar,
 
@@ -67,25 +70,25 @@ enum Message {
     terminar_proceso,
     salir,
     reset,
-    cancelar_proceso(String)
-
-
+    cancelar_proceso(String),
+    descart
 }
 
 struct Interfas {
-    procesoV:bool,
-    cargaV:bool,
-    atenderV:bool,
-    terminarV:bool,
-   // value: i32,
+    procesoV: bool,
+    cargaV: bool,
+    atenderV: bool,
+    terminarV: bool,
+    // value: i32,
     ve: Vec<String>,
     proceso: String,
     traza: String,
     cant: usize,
-    procesos:Vec<String>,
-    ordenamiento:Vec<String>,
-    simula:Simulacion,
-    pagina:Pagina
+    procesos: Vec<String>,
+    ordenamiento: Vec<String>,
+    simula: Simulacion,
+    pagina: Pagina,
+    boton:bool
 }
 
 pub fn main() -> iced::Result {
@@ -101,19 +104,19 @@ impl Application for Interfas {
     fn new(fla: ()) -> (Interfas, Command<Message>) {
         (
             Interfas {
-            
+                boton:false,
                 ve: vec![],
                 proceso: "".to_string(),
                 traza: "".to_string(),
                 cant: 0,
-                procesos:vec![],
-                ordenamiento:vec![],
-                simula:Simulacion::nuevo(),
-                pagina:Pagina::menu,
-                procesoV:false,
-                cargaV:false,
-                atenderV:false,
-                terminarV:false
+                procesos: vec![],
+                ordenamiento: vec![],
+                simula: Simulacion::nuevo(),
+                pagina: Pagina::menu,
+                procesoV: false,
+                cargaV: false,
+                atenderV: false,
+                terminarV: false,
             },
             Command::none(),
         )
@@ -125,115 +128,109 @@ impl Application for Interfas {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::cancelar_proceso(proceso)=>{
 
+            Message::descart=>{
+
+                self.pagina=Pagina::nuevo;
+            }
+            Message::insertar => {
+                self.simula
+                    .insertar(self.proceso.clone(), self.traza.clone());
+                self.proceso.clear();
+                self.traza.clear();
+            }
+
+            Message::descartar => {
+                self.simula
+                    .eliminar(self.proceso.clone(), self.traza.clone());
+                self.proceso.clear();
+                self.traza.clear();
+            }
+
+            Message::cancelar_proceso(proceso) => {
                 self.simula.cancelar(proceso.clone());
-
-                
-                
             }
 
-            Message::reset=>{
-
-            self.simula.reset()
-
-            }
-            Message::salir=>{
-
+            Message::reset => self.simula.reset(),
+            Message::salir => {
                 self.simula.reset();
 
                 exit(0x0100);
             }
-            Message::atender_proceso=>{
-                
-                if self.simula.procesoV && self.simula.cargaV && !self.simula.terminarV{
-                
-                self.simula.terminarV=true;
-                self.simula.atenderV=false;
-                self.simula.atender_proceso()
-               
-               
-               }
-            }
-            Message::terminar_proceso=>{
-
-                 if self.simula.procesoV && self.simula.cargaV && !self.simula.atenderV{
-                 
-                    self.simula.terminarV=false;
-                    self.simula.atenderV=true;
-
-                self.simula.terminar_proceso()}
-            }
-            Message::guardar_orden=>{
-
-                if self.simula.procesoV{
-                self.simula.cargaV=true;
-                self.simula.cargador(self.ordenamiento.clone() );
-                self.ordenamiento=vec![];
-                self.pagina=Pagina::menu;}
-                
-            }
-            Message::guardar_proceso=>{
-                if !self.cargaV{
-                self.procesoV=true;
-                self.simula.cargar_proceso(self.proceso.clone(), self.ve.clone());
-                self.ve=vec![];
-                self.procesos.push(self.proceso.clone());
-                self.proceso="".to_string();
-                self.pagina=Pagina::menu;}
-                
-
-            }
-            Message::menu=>{
-                self.pagina=Pagina::menu
-            }
-            Message::cargar=>{
-                if self.procesoV && !self.cargaV{
-                    
-                    self.pagina=Pagina::cargar
+            Message::atender_proceso => {
+                if self.simula.procesoV && self.simula.cargaV && !self.simula.terminarV {
+                    self.simula.terminarV = true;
+                    self.simula.atenderV = false;
+                    self.simula.atender_proceso()
                 }
-                
             }
-            Message::cancelar=>{
+            Message::terminar_proceso => {
+                if self.simula.procesoV && self.simula.cargaV && !self.simula.atenderV {
+                    self.simula.terminarV = false;
+                    self.simula.atenderV = true;
 
-                self.pagina=Pagina::cancelar
+                    self.simula.terminar_proceso()
+                }
             }
-            Message::crear=>{
-                if !self.simula.cargaV{
-                    self.simula.procesoV=true;
-                self.pagina=Pagina::crear;}
+            Message::guardar_orden => {
+                if self.simula.procesoV {
+                    self.simula.cargaV = true;
+                    self.simula.cargador(self.ordenamiento.clone());
+                    self.ordenamiento = vec![];
+                    self.pagina = Pagina::menu;
+                }
             }
-    
-            Message::traza(tra)=>{
-
-                self.traza=tra;
+            Message::guardar_proceso => {
+                if !self.cargaV {
+                    self.procesoV = true;
+                    self.simula
+                        .cargar_proceso(self.proceso.clone(), self.ve.clone());
+                    self.ve = vec![];
+                    self.procesos.push(self.proceso.clone());
+                    self.proceso = "".to_string();
+                    self.pagina = Pagina::menu;
+                }
+            }
+            Message::menu => self.pagina = Pagina::menu,
+            Message::cargar => {
+                if self.procesoV && !self.cargaV {
+                    self.pagina = Pagina::cargar
+                }
+            }
+            Message::cancelar => self.pagina = Pagina::cancelar,
+            Message::crear => {
+                if !self.simula.cargaV {
+                    self.simula.procesoV = true;
+                    self.pagina = Pagina::crear;
+                }
             }
 
-            Message::proceso(proce)=>{
+            Message::traza(tra) => {
+                self.traza = tra;
+            }
 
-                self.proceso=proce;
+            Message::proceso(proce) => {
+                self.proceso = proce;
             }
 
             Message::pala(palabra) => {}
 
             Message::guardar => {
-
                 self.ve.push(self.traza.clone());
-                self.traza="".to_string();
+                self.traza = "".to_string();
             }
             Message::eliminar(eliminar) => {
-                self.ve=self.ve
-                .clone()
-                .into_iter()
-                .filter(|x| *x != eliminar)
-                .collect();
+                self.ve = self
+                    .ve
+                    .clone()
+                    .into_iter()
+                    .filter(|x| *x != eliminar)
+                    .collect();
             }
-            Message::orden(pala)=>{
-
+            Message::orden(pala) => {
                 self.ordenamiento.push(pala);
             }
-            Message::eliminarorden(eliminar)=>{
-
+            Message::eliminarorden(eliminar) => {
                 self.ordenamiento = self
                     .ordenamiento
                     .clone()
@@ -245,36 +242,34 @@ impl Application for Interfas {
 
         Command::none()
     }
-        
-    fn view(&self) -> Element<Message> {
 
-      //  let actual= match self.pagina {
-       //     Pagina::menu=>login(),
-         //   Pagina::crear=>cargar(self.traza.clone(),self.proceso.clone(), self.ve.clone()),
-           // Pagina::cargar=>ordenador(self.procesos.clone(), self.ordenamiento.clone()),
-            //Pagina::cancelar=>cancel(self.simula.activos.clone())
-        //};
+    fn view(&self) -> Element<Message> {
+         let actual= match self.pagina {
+          Pagina::menu=>login(),
+           Pagina::crear=>cargar(self.traza.clone(),self.proceso.clone(), self.ve.clone()),
+         Pagina::cargar=>ordenador(self.procesos.clone(), self.ordenamiento.clone()),
+        Pagina::cancelar=>cancel(self.simula.activos.clone()),
+        Pagina::nuevo=>nuevo(self.simula.activos.clone(), self.traza.clone()),
+        };
 
         row!(
-        //actual,
-        nuevo(self.simula.activos.clone(),self.traza.clone()),
-        pilas("Pila de ejecucion", self.simula.pila_ejecicion.clone()),
-        fila("Cola de listos", self.simula.cola_listos.clone()),
-        fila("Cola de ejecucion", self.simula.cola_ejecucion.clone()),
-        fila("Cola de pendientes", self.simula.cola_pendiente.clone()), 
-        fila("Cola de terminados", self.simula.cola_terminados.clone()),
-        ).spacing(10)
+            actual,
+            
+            pilas("Pila de ejecucion", self.simula.pila_ejecicion.clone()),
+            fila("Cola de listos", self.simula.cola_listos.clone()),
+            fila("Cola de ejecucion", self.simula.cola_ejecucion.clone()),
+            fila("Cola de pendientes", self.simula.cola_pendiente.clone()),
+            fila("Cola de terminados", self.simula.cola_terminados.clone()),
+        )
+        .spacing(10)
         .into()
-        
     }
 }
 fn login() -> Element<'static, Message> {
+    let mut imagne = File::create("Atom.png").unwrap();
+    let mut write = BufWriter::new(&mut imagne);
 
-   
-    let mut imagne=File::create("Atom.png").unwrap();
-    let mut write =BufWriter::new(&mut imagne);
-
-     write.write_all(MI_IMAGEN);
+    write.write_all(MI_IMAGEN);
 
     let imagen = extraer::new("Atom.png");
 
@@ -329,37 +324,46 @@ fn login() -> Element<'static, Message> {
         .height(Length::Fixed(45.0))
         .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
         .on_press(Message::cancelar),
-        row!(Button::new(
-            text("Salir")
-                .horizontal_alignment(iced::alignment::Horizontal::Center)
-                .vertical_alignment(iced::alignment::Vertical::Center)
-                .size(15)
-        )
-        .width(Length::Fixed(150.0))
-        .height(Length::Fixed(45.0))
-        .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-        .on_press(Message::salir),
-
         Button::new(
-            text("reset")
+            text("Insertar/Eliminar")
                 .horizontal_alignment(iced::alignment::Horizontal::Center)
                 .vertical_alignment(iced::alignment::Vertical::Center)
                 .size(15)
         )
-        .width(Length::Fixed(70.0))
+        .width(Length::Fixed(500.0))
         .height(Length::Fixed(45.0))
         .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-        .on_press(Message::reset),
-    ).spacing(10)
+        .on_press(Message::descart),
+
+        row!(
+            Button::new(
+                text("Salir")
+                    .horizontal_alignment(iced::alignment::Horizontal::Center)
+                    .vertical_alignment(iced::alignment::Vertical::Center)
+                    .size(15)
+            )
+            .width(Length::Fixed(150.0))
+            .height(Length::Fixed(45.0))
+            .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+            .on_press(Message::salir),
+            Button::new(
+                text("reset")
+                    .horizontal_alignment(iced::alignment::Horizontal::Center)
+                    .vertical_alignment(iced::alignment::Vertical::Center)
+                    .size(15)
+            )
+            .width(Length::Fixed(70.0))
+            .height(Length::Fixed(45.0))
+            .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+            .on_press(Message::reset),
+        )
+        .spacing(10)
     )
     .width(Length::Fill)
-    .spacing(20)
+    .spacing(12)
     .align_items(iced::Alignment::Center);
 
-    let c = column!(
-        
-        
-        imagen.width(150).height(150), a)
+    let c = column!(imagen.width(150).height(150), a)
         .spacing(30)
         .align_items(iced::Alignment::Center);
 
@@ -368,20 +372,19 @@ fn login() -> Element<'static, Message> {
         .padding(Padding::from(40))
         .center_x()
         .center_y()
-        .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)));
+        .style(iced::theme::Container::Custom(Box::new(
+            Containestyle::menu,
+        )));
 
-        container(b)
+    container(b)
         .width(350)
-        .height(700)
+        .height(800)
         .center_x()
         .center_y()
         .into()
-
-    
 }
 
 fn cargar(traza: String, proceso: String, trazas: Vec<String>) -> Element<'static, Message> {
-   
     let mut b = column!()
         .width(Length::Fill)
         .spacing(20)
@@ -389,7 +392,6 @@ fn cargar(traza: String, proceso: String, trazas: Vec<String>) -> Element<'stati
 
     for i in trazas.iter() {
         b = b.push(
-            
             row!(
                 text(i).size(25).style(colore(color!(244, 246, 244))),
                 container(
@@ -401,24 +403,26 @@ fn cargar(traza: String, proceso: String, trazas: Vec<String>) -> Element<'stati
                     )
                     .width(Length::Fixed(100.0))
                     .height(Length::Fixed(30.0))
-                    .style(iced::theme::Button::Custom(Box::new(Buttonstyless::eliminar)))
+                    .style(iced::theme::Button::Custom(Box::new(
+                        Buttonstyless::eliminar
+                    )))
                     .on_press(Message::eliminar(i.to_string())),
                 ),
             )
             .spacing(15)
-            .align_items(iced::Alignment::Start)
+            .align_items(iced::Alignment::Start),
         );
     }
 
-    let c=container(Scrollable::new(b))
-    .width(300)
-    .height(400)
-    .padding(Padding::from(10))
-    .center_x()
-    .center_x()
-    .style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)));
-   
-
+    let c = container(Scrollable::new(b))
+        .width(300)
+        .height(400)
+        .padding(Padding::from(10))
+        .center_x()
+        .center_x()
+        .style(iced::theme::Container::Custom(Box::new(
+            Containestyle::cargar,
+        )));
 
     let mut a = column!(
         text_input("Nombre del proceso", &proceso)
@@ -430,11 +434,8 @@ fn cargar(traza: String, proceso: String, trazas: Vec<String>) -> Element<'stati
             .on_input(|pala| { Message::traza(pala) })
             .on_submit(Message::guardar)
             .style(iced::theme::TextInput::Custom(Box::new(Text_inputstyle))),
-
-            c,
-            row!(
-
-              
+        c,
+        row!(
             Button::new(
                 text("salir")
                     .horizontal_alignment(iced::alignment::Horizontal::Center)
@@ -444,8 +445,7 @@ fn cargar(traza: String, proceso: String, trazas: Vec<String>) -> Element<'stati
             .width(Length::Fixed(100.0))
             .height(Length::Fixed(45.0))
             .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-            .on_press(Message::menu), 
-
+            .on_press(Message::menu),
             Button::new(
                 text("Agregar proceso")
                     .horizontal_alignment(iced::alignment::Horizontal::Center)
@@ -456,510 +456,499 @@ fn cargar(traza: String, proceso: String, trazas: Vec<String>) -> Element<'stati
             .height(Length::Fixed(45.0))
             .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
             .on_press(Message::guardar_proceso),
-
-        
-        
-        
-         ).spacing(10) 
-
+        )
+        .spacing(10)
     )
     .width(Length::Fill)
     .spacing(20)
     .align_items(iced::Alignment::Center);
 
-
-   let d= container(a)
-    .width(300)
-    .padding(Padding::from(20))
-    .center_x()
-    .center_y()
-    .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)));
-
-    container(d)
-            .width(350)
-            .height(700)
-            .center_x()
-            .center_y()
-            .into()
-
-   
-    
-}
-
-fn ordenador(procesos:Vec<String>,orden:Vec<String>)->Element<'static,Message>{
-
-    let mut b = column!()
-    .width(Length::Fill)
-    .spacing(20)
-    .align_items(iced::Alignment::Center);
-
-for i in procesos.iter() {
-   
-    if orden.contains(i){
-
-        continue;
-    }
-
-    b = b.push(
-        
-        row!(
-
-            container(
-                Button::new(
-                    text(i)
-   
-                     .horizontal_alignment(iced::alignment::Horizontal::Center)
-                        .vertical_alignment(iced::alignment::Vertical::Center)
-                        .size(15)
-                )
-                .width(Length::Fixed(200.0))
-                .height(Length::Fixed(30.0))
-                .style(iced::theme::Button::Custom(Box::new(Buttonstyless::eliminar)))
-                .on_press(Message::orden(i.to_string())),
-            ),
-        )
-        .spacing(15)
-        .align_items(iced::Alignment::Start)
-    );
-}
-let c=container(container(Scrollable::new(b))
-.width(300)
-.height(190)
-.padding(Padding::from(10))
-.center_x()
-.center_x()
-.style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)))).width(Length::Fill).center_x().center_y();
-
-
-
-let mut a = column!(
-    
-).width(Length::Fill)
-.spacing(20)
-.align_items(iced::Alignment::Center);
-
-for i in orden.iter() {
-    a= a.push(
-        
-        row!(
-
-            container(
-                Button::new(
-                    text(i)
-   
-                     .horizontal_alignment(iced::alignment::Horizontal::Center)
-                        .vertical_alignment(iced::alignment::Vertical::Center)
-                        .size(15)
-                )
-                .width(Length::Fixed(200.0))
-                .height(Length::Fixed(30.0))
-                .style(iced::theme::Button::Custom(Box::new(Buttonstyless::eliminar)))
-                .on_press(Message::eliminarorden(i.to_string())),
-            ),
-        )
-        .spacing(15)
-        .align_items(iced::Alignment::Start)
-    );
-}
-
-
-
-let d= container(container(Scrollable::new(a))
-.width(300)
-.height(190)
-.padding(Padding::from(20))
-.center_x()
-.center_x()
-.style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)))).width(Length::Fill).center_x().center_y();
-
-let mut ul=container(column!(
-    
-    container(text("Indique el orden").size(30).style(colore(color!(244, 246, 244)))).width(Length::Fill).center_x().center_y(),
-    
-    c,
-    d,
-    row!(
-    Button::new(
-        text("salir")
-            .horizontal_alignment(iced::alignment::Horizontal::Center)
-            .vertical_alignment(iced::alignment::Vertical::Center)
-            .size(15)
-    )
-    .width(Length::Fixed(100.0))
-    .height(Length::Fixed(30.0))
-    .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-    .on_press(Message::menu),
-    container(
-    Button::new(
-        text("Listo")
-
-         .horizontal_alignment(iced::alignment::Horizontal::Center)
-            .vertical_alignment(iced::alignment::Vertical::Center)
-            .size(15)
-    )
-    .width(Length::Fixed(150.0))
-    .height(Length::Fixed(30.0))
-    .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-    .on_press(Message::guardar_orden)
-   ).width(Length::Fill)
-    .center_x().center_y())
-
-
-      ).spacing(30))
-        .padding(Padding::from(20))
+    let d = container(a)
         .width(300)
-        .height(600)
+        .padding(Padding::from(20))
         .center_x()
         .center_y()
-        .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)));
+        .style(iced::theme::Container::Custom(Box::new(
+            Containestyle::menu,
+        )));
 
-    container(ul)
-    .width(330)
-    .height(Length::Fill)
-    .center_x()
-    .center_y()
-    .into()
-    
+    container(d)
+        .width(350)
+        .height(700)
+        .center_x()
+        .center_y()
+        .into()
 }
 
-fn cancel(orden:Vec<String>)->Element<'static,Message>{
-  
-    let mut a = column!(
-    
-    ).width(Length::Fill)
-    .spacing(20)
-    .align_items(iced::Alignment::Center);
-    
+fn ordenador(procesos: Vec<String>, orden: Vec<String>) -> Element<'static, Message> {
+    let mut b = column!()
+        .width(Length::Fill)
+        .spacing(20)
+        .align_items(iced::Alignment::Center);
+
+    for i in procesos.iter() {
+        if orden.contains(i) {
+            continue;
+        }
+
+        b = b.push(
+            row!(container(
+                Button::new(
+                    text(i)
+                        .horizontal_alignment(iced::alignment::Horizontal::Center)
+                        .vertical_alignment(iced::alignment::Vertical::Center)
+                        .size(15)
+                )
+                .width(Length::Fixed(200.0))
+                .height(Length::Fixed(30.0))
+                .style(iced::theme::Button::Custom(Box::new(
+                    Buttonstyless::eliminar
+                )))
+                .on_press(Message::orden(i.to_string())),
+            ),)
+            .spacing(15)
+            .align_items(iced::Alignment::Start),
+        );
+    }
+    let c = container(
+        container(Scrollable::new(b))
+            .width(300)
+            .height(190)
+            .padding(Padding::from(10))
+            .center_x()
+            .center_x()
+            .style(iced::theme::Container::Custom(Box::new(
+                Containestyle::cargar,
+            ))),
+    )
+    .width(Length::Fill)
+    .center_x()
+    .center_y();
+
+    let mut a = column!()
+        .width(Length::Fill)
+        .spacing(20)
+        .align_items(iced::Alignment::Center);
+
     for i in orden.iter() {
-        a= a.push(
-            
+        a = a.push(
+            row!(container(
+                Button::new(
+                    text(i)
+                        .horizontal_alignment(iced::alignment::Horizontal::Center)
+                        .vertical_alignment(iced::alignment::Vertical::Center)
+                        .size(15)
+                )
+                .width(Length::Fixed(200.0))
+                .height(Length::Fixed(30.0))
+                .style(iced::theme::Button::Custom(Box::new(
+                    Buttonstyless::eliminar
+                )))
+                .on_press(Message::eliminarorden(i.to_string())),
+            ),)
+            .spacing(15)
+            .align_items(iced::Alignment::Start),
+        );
+    }
+
+    let d = container(
+        container(Scrollable::new(a))
+            .width(300)
+            .height(190)
+            .padding(Padding::from(20))
+            .center_x()
+            .center_x()
+            .style(iced::theme::Container::Custom(Box::new(
+                Containestyle::cargar,
+            ))),
+    )
+    .width(Length::Fill)
+    .center_x()
+    .center_y();
+
+    let mut ul = container(
+        column!(
+            container(
+                text("Indique el orden")
+                    .size(30)
+                    .style(colore(color!(244, 246, 244)))
+            )
+            .width(Length::Fill)
+            .center_x()
+            .center_y(),
+            c,
+            d,
             row!(
-    
+                Button::new(
+                    text("salir")
+                        .horizontal_alignment(iced::alignment::Horizontal::Center)
+                        .vertical_alignment(iced::alignment::Vertical::Center)
+                        .size(15)
+                )
+                .width(Length::Fixed(100.0))
+                .height(Length::Fixed(30.0))
+                .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+                .on_press(Message::menu),
                 container(
                     Button::new(
-                        text(i)
-       
-                         .horizontal_alignment(iced::alignment::Horizontal::Center)
+                        text("Listo")
+                            .horizontal_alignment(iced::alignment::Horizontal::Center)
                             .vertical_alignment(iced::alignment::Vertical::Center)
                             .size(15)
                     )
-                    .width(Length::Fixed(200.0))
+                    .width(Length::Fixed(150.0))
                     .height(Length::Fixed(30.0))
                     .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-                    .on_press(Message::cancelar_proceso(i.to_string())),
-                ),
+                    .on_press(Message::guardar_orden)
+                )
+                .width(Length::Fill)
+                .center_x()
+                .center_y()
             )
-            .spacing(110)
-            .align_items(iced::Alignment::Start)
-        );
-    }
-    
-    
-    
-    let d= container(container(Scrollable::new(a))
-    .width(300)
-    .height(400)
-    .padding(Padding::from(20))
-    .center_x()
-    .center_x()
-    .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)))).width(Length::Fill).center_x().center_y();
-
-  let c= container( column!(
-        container(text("Cancelar proceso").size(30).style(colore(color!(244, 246, 244)))).width(Length::Fill).center_x().center_y(),
-     d,
-     Button::new(
-        text("Salir")
-
-         .horizontal_alignment(iced::alignment::Horizontal::Center)
-            .vertical_alignment(iced::alignment::Vertical::Center)
-            .size(25)
+        )
+        .spacing(30),
     )
-    .width(Length::Fixed(200.0))
-    .height(Length::Fixed(50.0))
-    .style(iced::theme::Button::Custom(Box::new(Buttonstyless::eliminar)))
-    .on_press(Message::menu)
-
-    
-
-    ).width(Length::Fill)
-    .spacing(20)
-    .align_items(iced::Alignment::Center)
-
-) .width(300)
-//.height(800)
-.padding(Padding::from(20))
-.center_x()
-.center_x()
-.style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)));
-
-container(
-
-    c
-).width(350)
-.height(900)
-.center_x()
-.center_y()
-.into()
-
-}
-
-
-
-fn fila(texto:&str,mut cola: LinkedList<Traza>)->Element<'static,Message> {
-
-
-    let mut a = column!(
-
-        container(
-            text(texto).size(15).style(colore(color!(244, 246, 244)))
-        ).width(Length::Fill).center_x().center_y(),
-
-    
-    ).width(Length::Fill)
-    .spacing(20)
-    .align_items(iced::Alignment::Center);
-  
-    
-   while !cola.is_empty() {
-        
-        let mut nombre=cola.pop_back().unwrap();
-        
-        let nom=format!("{}[{}]",nombre.nombre,nombre.traza);
-
-        a= a.push(
-            
-            row!(
-    
-                container(
-
-                    container(Scrollable::new(text(nom).size(20).style(colore(color!(244, 246, 244)))))
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .center_x()
-                    .center_y()
-                )
-                .width(100)
-                .height(50)
-                .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)))
-            )
-            .spacing(110)
-            .align_items(iced::Alignment::Center)
-        );
-    }
-    
-    let d=container(Scrollable::new(a))
-    .width(170)
-    .height(610)
     .padding(Padding::from(20))
-    .center_x()
-    .center_x()
-    .style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)));
-
-    container(d)
-    //.width(220)
-    .height(Length::Fill)
+    .width(300)
+    .height(600)
     .center_x()
     .center_y()
-    .into()
-    
+    .style(iced::theme::Container::Custom(Box::new(
+        Containestyle::menu,
+    )));
+
+    container(ul)
+        .width(330)
+        .height(Length::Fill)
+        .center_x()
+        .center_y()
+        .into()
 }
 
-fn pilas(texto:&str,mut cola:LinkedList<Traza>)->Element<'static,Message> {
+fn cancel(orden: Vec<String>) -> Element<'static, Message> {
+    let mut a = column!()
+        .width(Length::Fill)
+        .spacing(20)
+        .align_items(iced::Alignment::Center);
 
-   
-
-    let mut a = column!(
-
-        container(
-            text(texto).size(15).style(colore(color!(244, 246, 244)))
-        ).width(Length::Fill).center_x().center_y(),
-
-    
-    ).width(Length::Fill)
-    .spacing(20)
-    .align_items(iced::Alignment::Center);
-    
-    while !cola.is_empty() {
-        
-        let  nombre=cola.pop_front().unwrap();
-        let nom=format!("{}[{}]",nombre.nombre,nombre.traza);
-        a= a.push(
-            
-            row!(
-    
-                container(
-                    container(Scrollable::new(text(nom).size(20).style(colore(color!(244, 246, 244)))))
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .center_x()
-                    .center_y()
-                )
-                .width(100)
-                .height(50)
-                .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)))
-            )
-            .spacing(110)
-            .align_items(iced::Alignment::Center)
-        );
-    }
-    
-    let d=container(Scrollable::new(a))
-    .width(170)
-    .height(610)
-    .padding(Padding::from(20))
-    .center_x()
-    .center_x()
-    .style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)));
-
-    container(d)
-    //.width(220)
-    .height(Length::Fill)
-    .center_x()
-    .center_y()
-    .into()
-    
-}
-
-
-fn nuevo(procesos:Vec<String>,traza: String)->Element<'static,Message>{
-
-    let mut b = column!()
-    .width(Length::Fill)
-    .spacing(20)
-    .align_items(iced::Alignment::Center);
-
-for i in procesos.iter() {
-   
-   
-
-    b = b.push(
-        
-        row!(
-
-            container(
+    for i in orden.iter() {
+        a = a.push(
+            row!(container(
                 Button::new(
                     text(i)
-   
-                     .horizontal_alignment(iced::alignment::Horizontal::Center)
+                        .horizontal_alignment(iced::alignment::Horizontal::Center)
                         .vertical_alignment(iced::alignment::Vertical::Center)
                         .size(15)
                 )
                 .width(Length::Fixed(200.0))
                 .height(Length::Fixed(30.0))
-                .style(iced::theme::Button::Custom(Box::new(Buttonstyless::eliminar)))
-                .on_press(Message::orden(i.to_string())),
-            ),
-        )
-        .spacing(15)
-        .align_items(iced::Alignment::Start)
-    );
-}
-let c=container(container(Scrollable::new(b))
-.width(300)
-.height(190)
-.padding(Padding::from(10))
-.center_x()
-.center_x()
-.style(iced::theme::Container::Custom(Box::new(Containestyle::cargar)))).width(Length::Fill).center_x().center_y();
+                .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+                .on_press(Message::cancelar_proceso(i.to_string())),
+            ),)
+            .spacing(110)
+            .align_items(iced::Alignment::Start),
+        );
+    }
 
-
-
-let mut a = column!(
-
-   
-text_input("Nombre de la traza  (ENTER)", &traza)
-    .width(Length::Fixed(500.0))
-    .on_input(|pala| { Message::traza(pala) })
-    .on_submit(Message::guardar)
-    .style(iced::theme::TextInput::Custom(Box::new(Text_inputstyle))),
-
-    row!(
-        Button::new(
-            text("Insertar")
-                .horizontal_alignment(iced::alignment::Horizontal::Center)
-                .vertical_alignment(iced::alignment::Vertical::Center)
-                .size(15)
-        )
-        .width(Length::Fixed(125.0))
-        .height(Length::Fixed(30.0))
-        .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-        .on_press(Message::menu),
-        container(
-        Button::new(
-            text("eliminar")
-    
-             .horizontal_alignment(iced::alignment::Horizontal::Center)
-                .vertical_alignment(iced::alignment::Vertical::Center)
-                .size(15)
-        )
-        .width(Length::Fixed(125.0))
-        .height(Length::Fixed(30.0))
-        .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-        .on_press(Message::guardar_orden)
-       ).width(Length::Fill)
-        .center_x().center_y()).spacing(10)
-
-
-
-
-    
-).width(Length::Fill)
-.spacing(20)
-.align_items(iced::Alignment::Center);
-
-let salir=container(
-    Button::new(
-        text("Salir")
-
-         .horizontal_alignment(iced::alignment::Horizontal::Center)
-            .vertical_alignment(iced::alignment::Vertical::Center)
-            .size(20)
+    let d = container(
+        container(Scrollable::new(a))
+            .width(300)
+            .height(400)
+            .padding(Padding::from(20))
+            .center_x()
+            .center_x()
+            .style(iced::theme::Container::Custom(Box::new(
+                Containestyle::menu,
+            ))),
     )
-    .width(Length::Fixed(150.0))
-    .height(Length::Fixed(40.0))
-    .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
-    .on_press(Message::guardar_orden)
-   ).width(Length::Fill)
-    .center_x().center_y();
+    .width(Length::Fill)
+    .center_x()
+    .center_y();
 
+    let c = container(
+        column!(
+            container(
+                text("Cancelar proceso")
+                    .size(30)
+                    .style(colore(color!(244, 246, 244)))
+            )
+            .width(Length::Fill)
+            .center_x()
+            .center_y(),
+            d,
+            Button::new(
+                text("Salir")
+                    .horizontal_alignment(iced::alignment::Horizontal::Center)
+                    .vertical_alignment(iced::alignment::Vertical::Center)
+                    .size(25)
+            )
+            .width(Length::Fixed(200.0))
+            .height(Length::Fixed(50.0))
+            .style(iced::theme::Button::Custom(Box::new(
+                Buttonstyless::eliminar
+            )))
+            .on_press(Message::menu)
+        )
+        .width(Length::Fill)
+        .spacing(20)
+        .align_items(iced::Alignment::Center),
+    )
+    .width(300)
+    //.height(800)
+    .padding(Padding::from(20))
+    .center_x()
+    .center_x()
+    .style(iced::theme::Container::Custom(Box::new(
+        Containestyle::cargar,
+    )));
 
-let mut ul=container(column!(
-    
-    container(text("Indique la accion").size(30).style(colore(color!(244, 246, 244)))).width(Length::Fill).center_x().center_y(),
-    
-    c,
-    a,
-
-  salir
-    
-
-    
-    
-    
-
-
-      ).spacing(30))
-        .padding(Padding::from(20))
-        .width(300)
-        .height(600)
+    container(c)
+        .width(350)
+        .height(900)
         .center_x()
         .center_y()
-        .style(iced::theme::Container::Custom(Box::new(Containestyle::menu)));
-
-    container(ul)
-    .width(330)
-    .height(Length::Fill)
-    .center_x()
-    .center_y()
-    .into()
-    
+        .into()
 }
 
-enum  Containestyle {
+fn fila(texto: &str, mut cola: LinkedList<Traza>) -> Element<'static, Message> {
+    let mut a = column!(
+        container(text(texto).size(15).style(colore(color!(244, 246, 244))))
+            .width(Length::Fill)
+            .center_x()
+            .center_y(),
+    )
+    .width(Length::Fill)
+    .spacing(20)
+    .align_items(iced::Alignment::Center);
+
+    while !cola.is_empty() {
+        let mut nombre = cola.pop_front().unwrap();
+
+        let nom = format!("{}[{}]", nombre.nombre, nombre.traza);
+
+        a = a.push(
+            row!(container(
+                container(Scrollable::new(
+                    text(nom).size(20).style(colore(color!(244, 246, 244)))
+                ))
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center_x()
+                .center_y()
+            )
+            .width(100)
+            .height(50)
+            .style(iced::theme::Container::Custom(Box::new(
+                Containestyle::menu
+            ))))
+            .spacing(110)
+            .align_items(iced::Alignment::Center),
+        );
+    }
+
+    let d = container(Scrollable::new(a))
+        .width(170)
+        .height(610)
+        .padding(Padding::from(20))
+        .center_x()
+        .center_x()
+        .style(iced::theme::Container::Custom(Box::new(
+            Containestyle::cargar,
+        )));
+
+    container(d)
+        //.width(220)
+        .height(Length::Fill)
+        .center_x()
+        .center_y()
+        .into()
+}
+
+fn pilas(texto: &str, mut cola: LinkedList<Traza>) -> Element<'static, Message> {
+    let mut a = column!(
+        container(text(texto).size(15).style(colore(color!(244, 246, 244))))
+            .width(Length::Fill)
+            .center_x()
+            .center_y(),
+    )
+    .width(Length::Fill)
+    .spacing(20)
+    .align_items(iced::Alignment::Center);
+
+    while !cola.is_empty() {
+        let nombre = cola.pop_front().unwrap();
+        let nom = format!("{}[{}]", nombre.nombre, nombre.traza);
+        a = a.push(
+            row!(container(
+                container(Scrollable::new(
+                    text(nom).size(20).style(colore(color!(244, 246, 244)))
+                ))
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center_x()
+                .center_y()
+            )
+            .width(100)
+            .height(50)
+            .style(iced::theme::Container::Custom(Box::new(
+                Containestyle::menu
+            ))))
+            .spacing(110)
+            .align_items(iced::Alignment::Center),
+        );
+    }
+
+    let d = container(Scrollable::new(a))
+        .width(170)
+        .height(610)
+        .padding(Padding::from(20))
+        .center_x()
+        .center_x()
+        .style(iced::theme::Container::Custom(Box::new(
+            Containestyle::cargar,
+        )));
+
+    container(d)
+        //.width(220)
+        .height(Length::Fill)
+        .center_x()
+        .center_y()
+        .into()
+}
+
+fn nuevo(procesos: Vec<String>, traza: String) -> Element<'static, Message> {
+    let mut b = column!()
+        .width(Length::Fill)
+        .spacing(20)
+        .align_items(iced::Alignment::Center);
+
+    for i in procesos.iter() {
+        b = b.push(
+            row!(container(
+                Button::new(
+                    text(i)
+                        .horizontal_alignment(iced::alignment::Horizontal::Center)
+                        .vertical_alignment(iced::alignment::Vertical::Center)
+                        .size(15)
+                )
+                .width(Length::Fixed(200.0))
+                .height(Length::Fixed(30.0))
+                .style(iced::theme::Button::Custom(Box::new(
+                    Buttonstyless::eliminar
+                )))
+                .on_press(Message::proceso(i.to_string())),
+            ),)
+            .spacing(15)
+            .align_items(iced::Alignment::Start),
+        );
+    }
+    let c = container(
+        container(Scrollable::new(b))
+            .width(300)
+            .height(190)
+            .padding(Padding::from(10))
+            .center_x()
+            .center_x()
+            .style(iced::theme::Container::Custom(Box::new(
+                Containestyle::cargar,
+            ))),
+    )
+    .width(Length::Fill)
+    .center_x()
+    .center_y();
+
+    let mut a = column!(
+        text_input("Nombre de la traza  (ENTER)", &traza)
+            .width(Length::Fixed(500.0))
+            .on_input(|pala| { Message::traza(pala) })
+            .on_submit(Message::traza(traza))
+            .style(iced::theme::TextInput::Custom(Box::new(Text_inputstyle))),
+        row!(
+            Button::new(
+                text("Insertar")
+                    .horizontal_alignment(iced::alignment::Horizontal::Center)
+                    .vertical_alignment(iced::alignment::Vertical::Center)
+                    .size(15)
+            )
+            .width(Length::Fixed(125.0))
+            .height(Length::Fixed(30.0))
+            .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+            .on_press(Message::insertar),
+            container(
+                Button::new(
+                    text("eliminar")
+                        .horizontal_alignment(iced::alignment::Horizontal::Center)
+                        .vertical_alignment(iced::alignment::Vertical::Center)
+                        .size(15)
+                )
+                .width(Length::Fixed(125.0))
+                .height(Length::Fixed(30.0))
+                .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+                .on_press(Message::descartar)
+            )
+            .width(Length::Fill)
+            .center_x()
+            .center_y()
+        )
+        .spacing(10)
+    )
+    .width(Length::Fill)
+    .spacing(20)
+    .align_items(iced::Alignment::Center);
+
+    let salir = container(
+        Button::new(
+            text("Salir")
+                .horizontal_alignment(iced::alignment::Horizontal::Center)
+                .vertical_alignment(iced::alignment::Vertical::Center)
+                .size(20),
+        )
+        .width(Length::Fixed(150.0))
+        .height(Length::Fixed(40.0))
+        .style(iced::theme::Button::Custom(Box::new(Buttonstyless::menu)))
+        .on_press(Message::menu),
+    )
+    .width(Length::Fill)
+    .center_x()
+    .center_y();
+
+    let mut ul = container(
+        column!(
+            container(
+                text("Indique la accion")
+                    .size(30)
+                    .style(colore(color!(244, 246, 244)))
+            )
+            .width(Length::Fill)
+            .center_x()
+            .center_y(),
+            c,
+            a,
+            salir
+        )
+        .spacing(30),
+    )
+    .padding(Padding::from(20))
+    .width(300)
+    .height(600)
+    .center_x()
+    .center_y()
+    .style(iced::theme::Container::Custom(Box::new(
+        Containestyle::menu,
+    )));
+
+    container(ul)
+        .width(330)
+        .height(Length::Fill)
+        .center_x()
+        .center_y()
+        .into()
+}
+
+enum Containestyle {
     menu,
     cargar,
 }
-
 
 impl container::StyleSheet for Containestyle {
     type Style = Theme;
@@ -968,24 +957,26 @@ impl container::StyleSheet for Containestyle {
         container::Appearance {
             text_color: Some(Color::from_rgb(0.0, 0.0, 0.0)),
             border: iced::Border::with_radius(20),
-            background:Some(iced::Background::Color( match self{
-                Self::menu=>color!(54, 68, 72),
-                Self::cargar=>color!(215, 96, 62)
+            background: Some(iced::Background::Color(match self {
+                Self::menu => color!(54, 68, 72),
+                Self::cargar => color!(215, 96, 62),
             })),
             shadow: Shadow {
                 color: color!(215, 96, 62),
-                offset: Vector::new(match self {
-                    Self::menu=>0.0,
-                    Self::cargar=>0.0,
-                    
-                },match self {
-                    Self::menu=>0.2,
-                    Self::cargar=>0.0,}
-            )
-                ,
+                offset: Vector::new(
+                    match self {
+                        Self::menu => 0.0,
+                        Self::cargar => 0.0,
+                    },
+                    match self {
+                        Self::menu => 0.2,
+                        Self::cargar => 0.0,
+                    },
+                ),
                 blur_radius: match self {
-                    Self::menu=>40.0,
-                    Self::cargar=>0.0,},
+                    Self::menu => 40.0,
+                    Self::cargar => 0.0,
+                },
             },
         }
     }
@@ -1033,12 +1024,9 @@ impl text_input::StyleSheet for Text_inputstyle {
     }
 }
 
-enum   Buttonstyless{
-
-
+enum Buttonstyless {
     menu,
     eliminar,
-
 }
 
 impl button::StyleSheet for Buttonstyless {
@@ -1048,34 +1036,37 @@ impl button::StyleSheet for Buttonstyless {
         button::Appearance {
             text_color: color!(244, 246, 244),
             border: iced::Border::with_radius(25),
-            background: Some(iced::Background::Color(match self{
-               Self::menu=>color!(215, 96, 62),
-               Self::eliminar=>color!(54, 68, 72),
-
+            background: Some(iced::Background::Color(match self {
+                Self::menu => color!(215, 96, 62),
+                Self::eliminar => color!(54, 68, 72),
             })),
             shadow: Shadow {
-                color: match self{
-                    Self::menu=>iced::Color::BLACK,
-                    Self::eliminar=>iced::Color::TRANSPARENT,
-                 },
+                color: match self {
+                    Self::menu => iced::Color::BLACK,
+                    Self::eliminar => iced::Color::TRANSPARENT,
+                },
                 blur_radius: 40.0,
-                offset: Vector::new(match self {
-                    Self::menu=>0.0,
-                    Self::eliminar=>0.0,
-                    
-                },match self {
-                    Self::menu=>0.2,
-                    Self::eliminar=>0.0,}
-            ),
+                offset: Vector::new(
+                    match self {
+                        Self::menu => 0.0,
+                        Self::eliminar => 0.0,
+                    },
+                    match self {
+                        Self::menu => 0.2,
+                        Self::eliminar => 0.0,
+                    },
+                ),
             },
-            shadow_offset: Vector::new(match self {
-                Self::menu=>0.0,
-                Self::eliminar=>0.0,
-                
-            },match self {
-                Self::menu=>0.2,
-                Self::eliminar=>0.0,}
-        ),
+            shadow_offset: Vector::new(
+                match self {
+                    Self::menu => 0.0,
+                    Self::eliminar => 0.0,
+                },
+                match self {
+                    Self::menu => 0.2,
+                    Self::eliminar => 0.0,
+                },
+            ),
         }
     }
 }
